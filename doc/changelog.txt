@@ -1,0 +1,9 @@
+Legend:
+[+] added
+[*] changed
+[-] deleted
+[!] bug fixed
+
+Version 0.0.0.1
+===============
+  First version.

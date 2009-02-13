@@ -40,14 +40,14 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)\inc&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)\inc&quot;;../base/inc"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
 				UsePrecompiledHeader="1"
 				PrecompiledHeaderThrough="precompiled.h"
 				WarningLevel="3"
-				DebugInformationFormat="4"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -60,6 +60,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				TargetMachine="1"
 			/>
@@ -112,8 +113,8 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)\inc&quot;"
-				RuntimeLibrary="2"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)\inc&quot;;../base/inc"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="1"
 				PrecompiledHeaderThrough="precompiled.h"
@@ -175,6 +176,10 @@
 				RelativePath=".\src\precompiled.cpp"
 				>
 			</File>
+			<File
+				RelativePath="..\base\srñ\Trace.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -187,6 +192,10 @@
 			</File>
 			<File
 				RelativePath=".\inc\targetver.h"
+				>
+			</File>
+			<File
+				RelativePath="..\base\inc\Trace.h"
 				>
 			</File>
 		</Filter>

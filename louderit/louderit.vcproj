@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)\inc&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)\inc&quot;;../base/inc"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -52,7 +52,7 @@
 				UsePrecompiledHeader="1"
 				PrecompiledHeaderThrough="precompiled.h"
 				WarningLevel="3"
-				DebugInformationFormat="4"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -65,7 +65,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				LinkIncremental="2"
+				AdditionalDependencies="../bin/$(ConfigurationName)/lhook.lib"
+				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -192,7 +193,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)\inc&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)\inc&quot;;../base/inc"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -212,6 +213,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="../bin/$(ConfigurationName)/lhook.lib"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -333,6 +335,42 @@
 				RelativePath=".\src\precompiled.cpp"
 				>
 			</File>
+			<File
+				RelativePath="..\base\srñ\Trace.cpp"
+				>
+			</File>
+			<Filter
+				Name="volume"
+				>
+				<File
+					RelativePath=".\src\volume_impl.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\volume_mx_impl.cpp"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="tinyxml"
+				>
+				<File
+					RelativePath="..\base\srñ\tinystr.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\base\srñ\tinyxml.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\base\srñ\tinyxmlerror.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\base\srñ\tinyxmlparser.cpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -340,19 +378,75 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath="..\base\inc\lexical_cast.h"
+				>
+			</File>
+			<File
+				RelativePath="..\base\inc\platform.h"
+				>
+			</File>
+			<File
 				RelativePath=".\inc\precompiled.h"
+				>
+			</File>
+			<File
+				RelativePath=".\inc\resource.h"
+				>
+			</File>
+			<File
+				RelativePath="..\base\inc\smartptr.h"
 				>
 			</File>
 			<File
 				RelativePath=".\inc\targetver.h"
 				>
 			</File>
+			<File
+				RelativePath="..\base\inc\Trace.h"
+				>
+			</File>
+			<Filter
+				Name="volume"
+				>
+				<File
+					RelativePath=".\inc\volume.h"
+					>
+				</File>
+				<File
+					RelativePath=".\inc\volume_impl.h"
+					>
+				</File>
+				<File
+					RelativePath=".\inc\volume_mx_impl.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="tinyxml"
+				>
+				<File
+					RelativePath="..\base\inc\tinystr.h"
+					>
+				</File>
+				<File
+					RelativePath="..\base\inc\tinyxml.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
+			<File
+				RelativePath=".\res\Icon_app.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\inc\louderit.rc"
+				>
+			</File>
 		</Filter>
 	</Files>
 	<Globals>
