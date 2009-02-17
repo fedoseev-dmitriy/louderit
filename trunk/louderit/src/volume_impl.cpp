@@ -4,10 +4,10 @@
 
 //-----------------------------------------------------------------------------
 CVolumeImpl::CVolumeImpl() :
-			m_pEndpointVolume( NULL ),
-			m_pDeviceEnumerator( NULL ),
-			m_pDefaultDevice( NULL ),
-			m_pCollection( NULL )
+			m_pEndpointVolume(NULL),
+			m_pDeviceEnumerator(NULL),
+			m_pDefaultDevice(NULL),
+			m_pCollection(NULL)
 {
 }
 
@@ -17,11 +17,11 @@ CVolumeImpl::~CVolumeImpl()
 }
 
 //-----------------------------------------------------------------------------
-bool CVolumeImpl::Init( int deviceNumber, HWND hwnd )
+bool CVolumeImpl::Init(int deviceNumber, HWND hwnd)
 {
-	CoInitialize( NULL );
+	CoInitialize(NULL);
 
-	m_hr = CoCreateGuid( &m_guidContext );
+	m_hr = CoCreateGuid(&m_guidContext);
 	EXIT_ON_ERROR(m_hr);
 	
 	m_hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_INPROC_SERVER, __uuidof(IMMDeviceEnumerator), (LPVOID *)&m_pDeviceEnumerator);
@@ -58,18 +58,18 @@ void CVolumeImpl::Shutdown()
 }
 
 //-----------------------------------------------------------------------------
-void CVolumeImpl::SetVolume( int percent )
+void CVolumeImpl::SetVolume(int percent)
 {
 	float  volume;
 	volume = (float)percent / MAX_VOL;
 
-	m_hr = m_pEndpointVolume->SetMasterVolumeLevelScalar( volume, &m_guidContext );
+	m_hr = m_pEndpointVolume->SetMasterVolumeLevelScalar(volume, &m_guidContext);
 	EXIT_ON_ERROR(m_hr);
 }
 //-----------------------------------------------------------------------------
-void CVolumeImpl::SetMute( bool mute )
+void CVolumeImpl::SetMute(bool mute)
 {
-	m_pEndpointVolume->SetMute( mute, &m_guidContext);
+	m_pEndpointVolume->SetMute(mute, &m_guidContext);
 }
 
 //-----------------------------------------------------------------------------
@@ -78,9 +78,9 @@ int CVolumeImpl::GetVolume()
 	float	volume;
 	int		percent;
 
-	m_hr = m_pEndpointVolume->GetMasterVolumeLevelScalar( &volume );
+	m_hr = m_pEndpointVolume->GetMasterVolumeLevelScalar(&volume);
 	EXIT_ON_ERROR(m_hr);
-	percent = (int)( MAX_VOL * volume + 0.5f );
+	percent = (int)(MAX_VOL * volume + 0.5f);
 
 	return 	percent;
 }
@@ -90,31 +90,31 @@ bool CVolumeImpl::GetMute()
 {
 	BOOL mute;
 
-	m_hr = m_pEndpointVolume->GetMute( &mute );
+	m_hr = m_pEndpointVolume->GetMute(&mute);
 	EXIT_ON_ERROR(m_hr);
 
 	return mute != 0 ? true : false;
 }
 
 //-----------------------------------------------------------------------------
-void CVolumeImpl::SetVolumeChannel( int leftChannelVol, int rightChannelVol )
+void CVolumeImpl::SetVolumeChannel(int leftChannelVol, int rightChannelVol)
 {
 	float  volume;
 	volume = (float)leftChannelVol / MAX_VOL;
-	m_hr = m_pEndpointVolume->SetChannelVolumeLevelScalar( LEFT, volume, &m_guidContext);
+	m_hr = m_pEndpointVolume->SetChannelVolumeLevelScalar(LEFT, volume, &m_guidContext);
 	EXIT_ON_ERROR(m_hr);
 
 	volume = (float)rightChannelVol / MAX_VOL;
-	m_hr = m_pEndpointVolume->SetChannelVolumeLevelScalar( RIGHT, volume, &m_guidContext);
+	m_hr = m_pEndpointVolume->SetChannelVolumeLevelScalar(RIGHT, volume, &m_guidContext);
 	EXIT_ON_ERROR(m_hr);
 }
 
 //-----------------------------------------------------------------------------
 int CVolumeImpl::GetNumDevice()
 {
-	CoInitialize( NULL );
+	CoInitialize(NULL);
 
-	m_hr = CoCreateGuid( &m_guidContext );
+	m_hr = CoCreateGuid(&m_guidContext);
 	EXIT_ON_ERROR(m_hr);
 
 	m_hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_INPROC_SERVER, __uuidof(IMMDeviceEnumerator), (LPVOID *)&m_pDeviceEnumerator);
@@ -133,32 +133,32 @@ int CVolumeImpl::GetNumDevice()
 }
 
 //-----------------------------------------------------------------------------
-std::string CVolumeImpl::GetDevName( const int index )
+std::string CVolumeImpl::GetDevName(const int index)
 {
 	std::string		s;
 	IMMDevice		*pEndpoint = NULL;
 	IPropertyStore	*pProps = NULL;
 
 	// Get pointer to endpoint number i.
-	m_hr = m_pCollection->Item( index, &pEndpoint );
+	m_hr = m_pCollection->Item(index, &pEndpoint);
 	EXIT_ON_ERROR(m_hr)
 
-	m_hr = pEndpoint->OpenPropertyStore( STGM_READ, &pProps );
+	m_hr = pEndpoint->OpenPropertyStore(STGM_READ, &pProps);
 	EXIT_ON_ERROR(m_hr)
 
 	PROPVARIANT varName;
 	// Initialize container for property value.
-	PropVariantInit( &varName );
+	PropVariantInit(&varName);
 
 	// Get the endpoint's friendly-name property.
-	m_hr = pProps->GetValue( PKEY_Device_FriendlyName, &varName );
+	m_hr = pProps->GetValue(PKEY_Device_FriendlyName, &varName);
 	EXIT_ON_ERROR(m_hr)
 
-	s = WideToAnsi( varName.pwszVal );
+	s = WideToAnsi(varName.pwszVal);
 
-	PropVariantClear( &varName );
-	SAFE_RELEASE( pProps )
-	SAFE_RELEASE( pEndpoint )
+	PropVariantClear(&varName);
+	SAFE_RELEASE(pProps)
+	SAFE_RELEASE(pEndpoint)
 	return s;
 }
 

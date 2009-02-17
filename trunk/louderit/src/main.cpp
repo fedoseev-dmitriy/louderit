@@ -68,64 +68,21 @@ int						keyMod = 0;
 
 IVolumeControlPtr		pVolume;
 
-extern "C" __declspec(dllexport) void SetHook( bool enable );
+extern "C" __declspec(dllexport) void SetHook(bool enable);
 //------------------------------------------------------------------------------
 // Setting
 //------------------------------------------------------------------------------
 static globalDLLData_t*		pSharedMem = NULL; // pointer to shared memory
-std::string					deviceName;
 bool						balloonHint = false;
 int							steps = 0;
 int							trayCommands[] = {0,0,0};
 int							balance = 50;
+std::string					deviceName;
+std::string					configFile;
+// TODO:	char configFile[MAX_PATH];
+// ???		char deviceName[256];
 
-//------------------------------------------------------------------------------
-void build_default_config( )  
-{  
-	TiXmlDocument doc;  
-	TiXmlDeclaration* decl = new TiXmlDeclaration( "1.0", "UTF-8", "" );  
-	doc.LinkEndChild( decl );  
 
-	TiXmlElement * root = new TiXmlElement( "General" );  
-	doc.LinkEndChild( root );  
-
-	TiXmlElement * general = new TiXmlElement( "General" );  
-	root->LinkEndChild( general );
-
-	general->SetAttribute("Device", "Динамики (Realtek High Definition Audio)");
-	general->SetAttribute("Balance", 50);
-	general->SetAttribute("Steps", 5);
-
-	TiXmlElement * view = new TiXmlElement( "View" );  
-	root->LinkEndChild( view );  
-	view->SetAttribute("Skin", "Classic.lsk");
-	view->SetAttribute("BalloonHint", 1);
-
-	TiXmlElement * mouse = new TiXmlElement( "Mouse" );  
-	root->LinkEndChild( mouse );  
-	mouse->SetAttribute("Tray", 1);
-	mouse->SetAttribute("Ctrl", 0);
-	mouse->SetAttribute("Alt", 0);
-	mouse->SetAttribute("Shift", 0);
-	mouse->SetAttribute("Click", 1);
-	mouse->SetAttribute("DClick", 2);
-	mouse->SetAttribute("MClick", 3);
-
-	TiXmlElement * hotkeys = new TiXmlElement( "HotKeys" );  
-	root->LinkEndChild( hotkeys );  
-	hotkeys->SetAttribute("UpKey", 0);
-	hotkeys->SetAttribute("UpMod", 0);
-	hotkeys->SetAttribute("DownKey", 0);
-	hotkeys->SetAttribute("DownMod", 0);
-	hotkeys->SetAttribute("MuteKey", 0);
-	hotkeys->SetAttribute("MuteMod", 0);
-
-	TiXmlElement * config = new TiXmlElement( "Config" );  
-	root->LinkEndChild( config );  
-	config->SetAttribute("TabIndex", 0);
-
-	doc.SaveFile( "lconfig.xml" );  
-}
 //------------------------------------------------------------------------------
 // Return true - XP, return false - Vista or later
 //------------------------------------------------------------------------------
@@ -134,10 +91,10 @@ bool checkXP()
 	bool				preVista;
 	OSVERSIONINFO		osvi;
 
-	ZeroMemory( &osvi, sizeof( OSVERSIONINFO ) );
-	osvi.dwOSVersionInfoSize = sizeof( OSVERSIONINFO );
+	ZeroMemory(&osvi, sizeof(OSVERSIONINFO));
+	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
 
-	GetVersionEx( &osvi );
+	GetVersionEx(&osvi);
 
 	preVista = osvi.dwMajorVersion < 6;
 	return preVista;
@@ -148,148 +105,129 @@ bool checkXP()
 //------------------------------------------------------------------------------
 void UnregHotKeys()
 {
-	UnregisterHotKey( hwnd, HK_UPKEY );
-	UnregisterHotKey( hwnd, HK_DOWNKEY );
-	UnregisterHotKey( hwnd, HK_MUTEKEY );
+	UnregisterHotKey(hwnd, HK_UPKEY);
+	UnregisterHotKey(hwnd, HK_DOWNKEY);
+	UnregisterHotKey(hwnd, HK_MUTEKEY);
+}
+//------------------------------------------------------------------------------
+// Установка горячих клавиш
+//------------------------------------------------------------------------------
+BOOL SetHotKey(const std::string& SKey, const std::string& SMod, int NumKey)
+{
+	hotKey = GetPrivateProfileInt("HotKeys", SKey.c_str(), 0, configFile.c_str());
+	if (hotKey != 0)
+	{
+		keyMod = GetPrivateProfileInt("HotKeys", SMod.c_str(), 0, configFile.c_str());
+		return RegisterHotKey(hwnd, NumKey, keyMod, hotKey);
+	}
+	return false;
 }
 
 //------------------------------------------------------------------------------
 // Загрузка настроек
 //------------------------------------------------------------------------------
-bool LoadConfig()
+void LoadConfig()
 {
-	TiXmlDocument doc( "lconfig.xml" );
-	if ( !doc.LoadFile() )
-	{
-		MessageBox( 0, "Не найдены настройки \nБудут использованы настройки по умолчанию",
-			"Information", MB_ICONINFORMATION );
-		build_default_config();
-		return LoadConfig();
-	}
-	TiXmlHandle		hDoc( &doc );
-	TiXmlElement*	pElem;
-	TiXmlHandle		hRoot(0);
+	configFile.resize(MAX_PATH + 1);
+	int j = GetCurrentDirectory(MAX_PATH, &configFile[0]);
+	configFile.resize(j);
+	configFile += "\\lconfig.ini";
 
-	pElem = hDoc.FirstChildElement().Element();
-	if ( !pElem )
-		return false;
-	hRoot = TiXmlHandle( pElem );
-
-	pElem=hRoot.FirstChild("General").Element();
-	if (pElem)
-	{
-		const char	*pName = pElem->Attribute( "Device" );
-		deviceName = pName;
-		pElem->QueryIntAttribute( "Balance",&balance );
-		pElem->QueryIntAttribute( "Steps", &steps );
-	}
-
-	pElem = hRoot.FirstChild( "View" ).Element();
-	if ( pElem )
-	{
-		const char	*pNameSkin = pElem->Attribute( "Skin" );
-		skin = pNameSkin;
-		pElem->QueryValueAttribute( "BalloonHint",&balloonHint );
-	}
-
-	pElem = hRoot.FirstChild( "Mouse" ).Element();
-	if ( pElem )
-	{
-		pElem->QueryValueAttribute( "Tray",&pSharedMem->scrollWithTray );
-		pElem->QueryValueAttribute( "Ctrl",&pSharedMem->scrollWithCtrl );
-		pElem->QueryValueAttribute( "Alt",&pSharedMem->scrollWithAlt );
-		pElem->QueryValueAttribute( "Shift",&pSharedMem->scrollWithShift );
-		pElem->QueryIntAttribute( "Click",&trayCommands[0] );
-		pElem->QueryIntAttribute( "DClick",&trayCommands[1] );
-		pElem->QueryIntAttribute( "MClick",&trayCommands[2] );
-	}
-
-	//////////////////////////////////////////////////////////////////////////
-	UnregHotKeys();
-	//////////////////////////////////////////////////////////////////////////
-	// [HotKeys]
-	// Установка горячих клавиш
-	pElem = hRoot.FirstChild( "HotKeys" ).Element();
-	if ( pElem )
-	{
-		pElem->QueryIntAttribute( "UpKey", &hotKey );
-		if ( hotKey != 0 )
-		{
-			pElem->QueryIntAttribute( "UpMod",&keyMod );
-			RegisterHotKey( hwnd, HK_UPKEY, keyMod, hotKey );
-		}
-		
-		pElem->QueryIntAttribute( "DownKey",&hotKey );
-		if ( hotKey != 0 )
-		{
-			pElem->QueryIntAttribute( "DownMod",&keyMod );
-			RegisterHotKey( hwnd, HK_DOWNKEY, keyMod, hotKey );
-		}
-		pElem->QueryIntAttribute( "MuteKey",&hotKey );
-		if ( hotKey !=0 )
-		{
-			pElem->QueryIntAttribute( "MuteMod",&keyMod );
-			RegisterHotKey( hwnd, HK_MUTEKEY, keyMod, hotKey );
-		}
-	}
+	// [General]
+	//...устройства
+	deviceName.resize(MAX_PATH+1);
+	GetPrivateProfileString("General", "Device", 0, &deviceName[0], 1024, configFile.c_str());
+	int sz=deviceName.find(char(0)); 
+	deviceName.resize((sz != -1) ? sz : 0);
+	
+	
 	// [General]
 	int n = pVolume->GetNumDevice();
 
-	TraceA( "GetNumDevice = %i", n );
+	TraceA("GetNumDevice = %i", n);
 
-	for( int i = 0; n - 1 >= i; i++ )
+	for (int i = 0; n - 1 >= i; i++)
 	{
-		if ( deviceName.compare( pVolume->GetDevName( i ) ) == 0)
+		if (deviceName.compare(pVolume->GetDevName(i)) == 0)
 		{
 			deviceNumber = i;
 			break;
 		}
 	}
-	deviceName = pVolume->GetDevName( deviceNumber );
-	TraceA( "Using device = %s", deviceName.c_str() );
+	deviceName = pVolume->GetDevName(deviceNumber);
+	TraceA("Using device = %s", deviceName.c_str());
 
 	// INIT MIXER!
-	// сюда перенести pVolume->Init( ... );
-	return true;
-}
+	// сюда перенести pVolume->Init(...);
 
+
+	// ..баланс
+	balance = GetPrivateProfileInt("General", "Balance", 50, configFile.c_str());
+
+	//...скорости регулирования
+	steps = GetPrivateProfileInt("General", "Steps", 5, configFile.c_str());
+
+
+
+	GetPrivateProfileString("View", "Skin", "Classic.lsk", &skin[0], 1024, configFile.c_str());
+	balloonHint = GetPrivateProfileInt("View", "BalloonHint", 0, configFile.c_str());
+
+	// [Mouse]
+	//...колесика
+	pSharedMem->scrollWithTray = GetPrivateProfileInt("Mouse", "Tray", 1, configFile.c_str());
+	pSharedMem->scrollWithCtrl = GetPrivateProfileInt("Mouse", "Ctrl", 0, configFile.c_str());
+	pSharedMem->scrollWithAlt = GetPrivateProfileInt("Mouse", "Alt", 0, configFile.c_str());
+	pSharedMem->scrollWithShift = GetPrivateProfileInt("Mouse", "Shift", 0, configFile.c_str());
+
+	//...действий над треем
+	trayCommands[0] = GetPrivateProfileInt("Mouse", "Click", 1, configFile.c_str());
+	trayCommands[1] = GetPrivateProfileInt("Mouse", "DClick", 2, configFile.c_str());
+	trayCommands[2] = GetPrivateProfileInt("Mouse", "MClick", 3, configFile.c_str());
+
+	// [HotKeys]
+	//...горячих клавиш
+	UnregHotKeys();
+	SetHotKey("UpKey", "UpMod", HK_UPKEY);
+	SetHotKey("DownKey", "DownMod", HK_DOWNKEY);
+	SetHotKey("MuteKey", "MuteMod", HK_MUTEKEY);
+}
 //------------------------------------------------------------------------------
 // Загрузка иконок
 //------------------------------------------------------------------------------
 void LoadIcons()
 {
 	std::string		path;
-	path.resize( MAX_PATH + 1 );
-	int n = GetCurrentDirectory( MAX_PATH, &path[0] );
-	path.resize( n );
+	path.resize(MAX_PATH + 1);
+	int n = GetCurrentDirectory(MAX_PATH, &path[0]);
+	path.resize(n);
 	path += "\\skins\\";
 	path += skin.c_str();
 
-	for ( int i = 0; NUM_ICONS - 1 >= i; i++ )
+	for (int i = 0; NUM_ICONS - 1 >= i; i++)
 	{
-		hIcons[i] = ExtractIcon( hInst, path.c_str(), i );
+		hIcons[i] = ExtractIcon(hInst, path.c_str(), i);
 	}
 }
 
 //------------------------------------------------------------------------------
 // Установка трея
 //------------------------------------------------------------------------------
-bool SetTrayIcon( DWORD message, HICON hIcon )
+bool SetTrayIcon(DWORD message, HICON hIcon)
 {
 	NOTIFYICONDATA	nid;
 
-	ZeroMemory( &nid, sizeof( NOTIFYICONDATA ) );
+	ZeroMemory(&nid, sizeof(NOTIFYICONDATA));
 
-	nid.cbSize				= sizeof( NOTIFYICONDATA );
+	nid.cbSize				= sizeof(NOTIFYICONDATA);
 	nid.hWnd				= hwnd;
 	nid.uID					= 1;
 	nid.uFlags				= NIF_ICON|NIF_MESSAGE|NIF_TIP;
 	nid.uCallbackMessage	= WM_NOTIFYICON;
 	nid.hIcon				= hIcon;
 
-	strcpy_s( nid.szTip, "LouderIt" );
+	strcpy_s(nid.szTip, "LouderIt");
 
-	return Shell_NotifyIcon( message, &nid ) != 0 ? true : false;
+	return Shell_NotifyIcon(message, &nid) != 0 ? true : false;
 }
 
 //------------------------------------------------------------------------------
@@ -300,41 +238,41 @@ void UpdateTrayIcon()
 	volumeLevel	= pVolume->GetVolume();
 	iconIndex	= volumeLevel * 14 / MAX_VOL ;
 	
-	if ( pVolume->GetMute() )
+	if (pVolume->GetMute())
 		iconIndex = iconIndex + 15;
-	SetTrayIcon( NIM_MODIFY, hIcons[iconIndex] );
+	SetTrayIcon(NIM_MODIFY, hIcons[iconIndex]);
 }
 
 //------------------------------------------------------------------------------
-bool ShowBalloon( BOOL flag, const std::string& balloonText,
-				 const std::string& balloonTitle )
+bool ShowBalloon(BOOL flag, const std::string& balloonText,
+				 const std::string& balloonTitle)
 {
 	NOTIFYICONDATA nid;
 
-	ZeroMemory( &nid, sizeof( NOTIFYICONDATA ) );
+	ZeroMemory(&nid, sizeof(NOTIFYICONDATA));
 
-	nid.cbSize	= sizeof( NOTIFYICONDATA );
+	nid.cbSize	= sizeof(NOTIFYICONDATA);
 	nid.hWnd	= hwnd;
 	nid.uID		= 1;
 	nid.uFlags	= NIF_INFO;
-	//strcpy_s( nid.szTip, "" );
-	if ( flag )
+	//strcpy_s(nid.szTip, "");
+	if (flag)
 	{
-		strcpy_s( nid.szInfo, balloonText.c_str() );
+		strcpy_s(nid.szInfo, balloonText.c_str());
 		nid.uTimeout = 0;
-		strcpy_s( nid.szInfoTitle, balloonTitle.c_str() );
+		strcpy_s(nid.szInfoTitle, balloonTitle.c_str());
 	}
 	else
 	{
-		strcpy_s( nid.szInfo, "" );
+		strcpy_s(nid.szInfo, "");
 	}
-	return Shell_NotifyIcon( NIM_MODIFY, &nid ) != 0 ? true : false;
+	return Shell_NotifyIcon(NIM_MODIFY, &nid) != 0 ? true : false;
 }
 
 //-----------------------------------------------------------------------------
 std::string GetMixerCmdLine()
 {
-	std::string str = "sndvol32.exe -d " + lexical_cast<std::string>( deviceNumber );
+	std::string str = "sndvol32.exe -d " + lexical_cast<std::string>(deviceNumber);
 	return str;
 }
 
@@ -346,87 +284,86 @@ void ProcessPopupMenu()
 	UINT	command;
 
 	hMenu	= CreatePopupMenu();
-	AppendMenu( hMenu, MF_STRING, IDM_OPEN_VOLUME_CONTROL, _T("Открыть &регулятор громкости") );
-	AppendMenu( hMenu, MF_STRING, IDM_SETTING_AUDIO_PARAMETR, _T("Настройка &аудиопараметров") );
-	AppendMenu( hMenu, MF_SEPARATOR, 0, NULL) ;
-	AppendMenu( hMenu, MF_STRING, IDM_SETTING_PROGRAM, _T("&Настройки программы") );
-	AppendMenu( hMenu, MF_SEPARATOR, 0, NULL);
-	//AppendMenu( hMenu, MF_STRING, IDM_ABOUT, _T("&О программе...") );
-	AppendMenu( hMenu, MF_STRING, IDM_EXIT, _T("&Выход") );
+	AppendMenu(hMenu, MF_STRING, IDM_OPEN_VOLUME_CONTROL, _T("Открыть &регулятор громкости"));
+	AppendMenu(hMenu, MF_STRING, IDM_SETTING_AUDIO_PARAMETR, _T("Настройка &аудиопараметров"));
+	AppendMenu(hMenu, MF_SEPARATOR, 0, NULL) ;
+	AppendMenu(hMenu, MF_STRING, IDM_SETTING_PROGRAM, _T("&Настройки программы"));
+	AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
+	//AppendMenu(hMenu, MF_STRING, IDM_ABOUT, _T("&О программе..."));
+	AppendMenu(hMenu, MF_STRING, IDM_EXIT, _T("&Выход"));
 
-	SetForegroundWindow( hwnd );
-	GetCursorPos( &cursorPos );
+	SetForegroundWindow(hwnd);
+	GetCursorPos(&cursorPos);
 
-	command = (UINT)TrackPopupMenuEx( hMenu, TPM_RETURNCMD + TPM_VERTICAL, 
-		cursorPos.x, cursorPos.y, hwnd, NULL );
+	command = (UINT)TrackPopupMenuEx(hMenu, TPM_RETURNCMD + TPM_VERTICAL, 
+		cursorPos.x, cursorPos.y, hwnd, NULL);
 
-	PostMessage( hwnd, WM_NULL, 0, 0 );
+	PostMessage(hwnd, WM_NULL, 0, 0);
 
-	switch( command )
+	switch (command)
 	{
 	case IDM_OPEN_VOLUME_CONTROL:
 		{
-			if ( isWindowsXP )
+			if (isWindowsXP)
 			{
-				WinExec( GetMixerCmdLine().c_str(), SW_SHOWNORMAL);
+				WinExec(GetMixerCmdLine().c_str(), SW_SHOWNORMAL);
 			}
 			else
 			{
-				WinExec( "sndvol.exe", SW_SHOWNORMAL);
+				WinExec("sndvol.exe", SW_SHOWNORMAL);
 			}
 			break;
 		}
 	case IDM_SETTING_AUDIO_PARAMETR:
-		WinExec( "rundll32.exe shell32.dll,Control_RunDLL mmsys.cpl", 
-			SW_SHOWNORMAL );
+		WinExec("rundll32.exe shell32.dll,Control_RunDLL mmsys.cpl", SW_SHOWNORMAL);
 		break;
 	case IDM_SETTING_PROGRAM:
-		WinExec( "LConfig.exe", SW_SHOWNORMAL );
+		WinExec("LConfig.exe", SW_SHOWNORMAL);
 		break;
 		//case IDM_ABOUT:
-		//  WinExec( "LConfig.exe -a", SW_SHOWNORMAL );
+		//  WinExec("LConfig.exe -a", SW_SHOWNORMAL);
 		//break;
 	case IDM_EXIT:
-		DestroyWindow( hwnd );
+		DestroyWindow(hwnd);
 		break;
 	}
-	DestroyMenu( hMenu );
+	DestroyMenu(hMenu);
 }
 
 //------------------------------------------------------------------------------
-void TrayCommand( int flag )
+void TrayCommand(int flag)
 {
-	switch( flag )
+	switch (flag)
 	{
 	case 1:
 		{
-			if ( isWindowsXP )
+			if (isWindowsXP)
 			{
-				WinExec( "sndvol32.exe -t", SW_SHOWNORMAL );
+				WinExec("sndvol32.exe -t", SW_SHOWNORMAL);
 			}
 			else
 			{
-				WinExec( "sndvol.exe -f 49349574", SW_SHOWNORMAL );
+				WinExec("sndvol.exe -f 49349574", SW_SHOWNORMAL);
 			}
 			break;
 		}
 	case 2:
 		{
-			if ( isWindowsXP )
+			if (isWindowsXP)
 			{
-				WinExec( GetMixerCmdLine().c_str(), SW_SHOWNORMAL);
+				WinExec(GetMixerCmdLine().c_str(), SW_SHOWNORMAL);
 			}
 			else
 			{
-				WinExec( "sndvol.exe", SW_SHOWNORMAL);
+				WinExec("sndvol.exe", SW_SHOWNORMAL);
 			}
 			break;
 		}
 	case 3:
-		pVolume->SetMute( !pVolume->GetMute() );
+		pVolume->SetMute(!pVolume->GetMute());
 		break;
 	case 4:
-		WinExec( "LConfig.exe", SW_SHOWNORMAL );
+		WinExec("LConfig.exe", SW_SHOWNORMAL);
 		break;
 	}
 }
@@ -437,26 +374,26 @@ void VolumeUp()
 	int rightChannelVol	= 0;
 	int leftChannelVol	= 0;
 
-	volumeLevel = std::min( ( volumeLevel + steps ), MAX_VOL );
+	volumeLevel = std::min((volumeLevel + steps), MAX_VOL);
 
-	if ( balance == 50 )
+	if (balance == 50)
 	{
-		pVolume->SetVolume( volumeLevel );
-		//pVolume->SetVolumeChannel( nVolumeLevel, nVolumeLevel );
+		pVolume->SetVolume(volumeLevel);
+		//pVolume->SetVolumeChannel(nVolumeLevel, nVolumeLevel);
 	}
 	else
 	{
-		if ( balance > 50 )
+		if (balance > 50)
 		{
-			leftChannelVol = std::max( volumeLevel + (volumeLevel * (50 - balance)) / 50, 0 );
+			leftChannelVol = std::max(volumeLevel + (volumeLevel * (50 - balance)) / 50, 0);
 			rightChannelVol = volumeLevel;
 		}
 		else
 		{
 			leftChannelVol = volumeLevel;
-			rightChannelVol = std::max( volumeLevel - (volumeLevel * (50 - balance) ) / 50, 0 );
+			rightChannelVol = std::max(volumeLevel - (volumeLevel * (50 - balance)) / 50, 0);
 		}
-		pVolume->SetVolumeChannel( leftChannelVol, rightChannelVol );
+		pVolume->SetVolumeChannel(leftChannelVol, rightChannelVol);
 	}
 }
 
@@ -466,28 +403,28 @@ void VolumeDown()
 	int rightChannelVol = 0;
 	int leftChannelVol	= 0;
 	
-	volumeLevel = std::max( (volumeLevel - steps), 0 );
+	volumeLevel = std::max((volumeLevel - steps), 0);
 
-	if ( balance == 50 )
+	if (balance == 50)
 	{
-		pVolume->SetVolume( volumeLevel );
-		//pVolume->SetVolumeChannel( nVolumeLevel, nVolumeLevel );
+		pVolume->SetVolume(volumeLevel);
+		//pVolume->SetVolumeChannel(nVolumeLevel, nVolumeLevel);
 	}
 	else
 	{
-		if ( balance > 50 )
+		if (balance > 50)
 		{
-			rightChannelVol = std::max( volumeLevel +
-				( volumeLevel * (50 - balance) ) / 50, 0 );
+			rightChannelVol = std::max(volumeLevel +
+				(volumeLevel * (50 - balance)) / 50, 0);
 			leftChannelVol = volumeLevel;
 		}
 		else
 		{
 			rightChannelVol = volumeLevel;
-			leftChannelVol = std::max( volumeLevel - 
-				( volumeLevel * (50 - balance) ) / 50, 0 );
+			leftChannelVol = std::max(volumeLevel - 
+				(volumeLevel * (50 - balance)) / 50, 0);
 		}
-		pVolume->SetVolumeChannel( leftChannelVol, rightChannelVol );
+		pVolume->SetVolumeChannel(leftChannelVol, rightChannelVol);
 	}
 }
 
@@ -496,9 +433,9 @@ void VolumeDown()
 //------------------------------------------------------------------------------
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	if( message == WM_VOLCHANGE )
+	if (message == WM_VOLCHANGE)
 	{
-		if ( lParam == (LPARAM)true )
+		if (lParam == (LPARAM)true)
 		{
 			VolumeUp();
 		}
@@ -507,38 +444,38 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			VolumeDown();
 		}
 
-		if ( balloonHint )
+		if (balloonHint)
 		{
-			if ( !pVolume->GetMute() )
+			if (!pVolume->GetMute())
 			{
-				ShowBalloon( true, lexical_cast<std::string>(pVolume->GetVolume()) + "%", "Громкость:" );
+				ShowBalloon(true, lexical_cast<std::string>(pVolume->GetVolume()) + "%", "Громкость:");
 			}
 			else
 			{
-				ShowBalloon( true, lexical_cast<std::string>(pVolume->GetVolume()) + "% (Выкл.)", "Громкость:");
+				ShowBalloon(true, lexical_cast<std::string>(pVolume->GetVolume()) + "% (Выкл.)", "Громкость:");
 			}
-			SetTimer( hWnd, 2, 3000, NULL );
+			SetTimer(hWnd, 2, 3000, NULL);
 		}
 	}
 
-	else if ( message == WM_LOADCONFIG )
+	else if (message == WM_LOADCONFIG)
 	{
 		LoadConfig();
 		LoadIcons();
-		SetTrayIcon( NIM_MODIFY, hIcons[iconIndex] );
+		SetTrayIcon(NIM_MODIFY, hIcons[iconIndex]);
 	}
 
-	else if (  message == WM_TASKBARCREATED )
+	else if (message == WM_TASKBARCREATED)
 	{
-		SetTrayIcon( NIM_ADD, hIcons[0] );
+		SetTrayIcon(NIM_ADD, hIcons[0]);
 		UpdateTrayIcon();
 	}
 
 	//-----------------------------------------------------------------------------
-	switch ( message ) 
+	switch (message) 
 	{
 	case MM_MIXM_CONTROL_CHANGE:
-		//if ( lParam == mxVolCtrl.dwControlID  || lParam == mxMuteCtrl.dwControlID )
+		//if (lParam == mxVolCtrl.dwControlID  || lParam == mxMuteCtrl.dwControlID)
 		//{
 			UpdateTrayIcon();
 		//}
@@ -549,12 +486,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			switch (lParam)
 			{
 			case WM_LBUTTONDOWN:
-				SetTimer( hWnd, 1, GetDoubleClickTime(), NULL );
+				SetTimer(hWnd, 1, GetDoubleClickTime(), NULL);
 				isClickStart = true;
 				break;
 
 			case WM_LBUTTONUP:
-				if ( isClickStart )
+				if (isClickStart)
 				{
 					isClickReady = true;
 					isClickStart = false;
@@ -562,13 +499,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 
 			case WM_LBUTTONDBLCLK:
-				TrayCommand( trayCommands[1] );
+				TrayCommand(trayCommands[1]);
 				isClickReady = false;
 				isDblClick = true;
 				break;
 
 			case WM_MBUTTONUP:
-				TrayCommand( trayCommands[2] );
+				TrayCommand(trayCommands[2]);
 				break;
 
 			case WM_RBUTTONUP:
@@ -576,36 +513,36 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 
 			case WM_MOUSEMOVE:
-				GetCursorPos( &pSharedMem->lastTrayPos );
+				GetCursorPos(&pSharedMem->lastTrayPos);
 				break;
 			}
 		}
 		break;
 
 	case WM_TIMER:
-		if ( wParam == 1 )
+		if (wParam == 1)
 		{
-			KillTimer( hWnd, 1 );
-			if ( !isDblClick )
+			KillTimer(hWnd, 1);
+			if (!isDblClick)
 			{
-				if ( isClickReady )
+				if (isClickReady)
 				{
 					isClickReady = false;
-					TrayCommand( trayCommands[0] );
+					TrayCommand(trayCommands[0]);
 				}
 			}
 			isDblClick = false;
 		}
-		if ( wParam == 2 )
+		if (wParam == 2)
 		{
-			KillTimer( hWnd, 2 );
-			ShowBalloon( true, "", "" );
+			KillTimer(hWnd, 2);
+			ShowBalloon(true, "", "");
 		}
 		break;
 
 	case WM_HOTKEY:
 		{
-			switch ( wParam )
+			switch (wParam)
 			{
 			case HK_UPKEY:
 				VolumeUp();
@@ -614,66 +551,66 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				VolumeDown();
 				break;
 			case HK_MUTEKEY:
-				pVolume->SetMute( !pVolume->GetMute() );
+				pVolume->SetMute(!pVolume->GetMute());
 				break;
 			}
-			if ( balloonHint )
+			if (balloonHint)
 			{
-				if ( !pVolume->GetMute() )
+				if (!pVolume->GetMute())
 				{
-					ShowBalloon( true, lexical_cast<std::string>(pVolume->GetVolume()) + "%", "Громкость:" );
+					ShowBalloon(true, lexical_cast<std::string>(pVolume->GetVolume()) + "%", "Громкость:");
 				}
 				else
 				{
-					ShowBalloon( true, lexical_cast<std::string>(pVolume->GetVolume()) + "% (Выкл.)", "Громкость:");
+					ShowBalloon(true, lexical_cast<std::string>(pVolume->GetVolume()) + "% (Выкл.)", "Громкость:");
 				}
-				SetTimer( hWnd, 2, 3000, NULL );
+				SetTimer(hWnd, 2, 3000, NULL);
 			}
 			break;
 		}
 
 	case WM_DESTROY:
-		PostQuitMessage( 0 );
+		PostQuitMessage(0);
 		break;
 
 	default:
 		{
-			return DefWindowProc( hWnd, message, wParam, lParam );
+			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
 	}
 	return 0;
 }
-void SharedMemory( bool enable )
+void SharedMemory(bool enable)
 {
-	if ( enable )
+	if (enable)
 	{
-		hMapObject = CreateFileMapping( INVALID_HANDLE_VALUE, NULL, 
-			PAGE_READWRITE,	0, sizeof( globalDLLData_t ), _T("LouderItMMF") );
+		hMapObject = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, 
+			PAGE_READWRITE,	0, sizeof(globalDLLData_t), _T("LouderItMMF"));
 		//hMapObject = OpenFileMapping(
 		//	FILE_MAP_ALL_ACCESS,
 		//	FALSE,
 		//	TEXT("LouderItMMF"));
 
-		if ( hMapObject == NULL ) 
+		if (hMapObject == NULL) 
 			return; 
 
-		pSharedMem =( globalDLLData_t* ) MapViewOfFile( hMapObject, FILE_MAP_ALL_ACCESS,
-			0, 0, 0 );
-		if ( !pSharedMem )
+		pSharedMem =(globalDLLData_t*) MapViewOfFile(hMapObject, FILE_MAP_ALL_ACCESS,
+			0, 0, 0);
+		if (!pSharedMem)
 		{
-			CloseHandle( hMapObject );
+			CloseHandle(hMapObject);
 		}
 	}
 	else
 	{
-		if ( pSharedMem )
+		if (pSharedMem)
 		{
-			UnmapViewOfFile( pSharedMem );
+			UnmapViewOfFile(pSharedMem);
 			pSharedMem = NULL;
 		}
-		if ( hMapObject  )
+		if (hMapObject)
 		{
-			CloseHandle( hMapObject );
+			CloseHandle(hMapObject);
 			hMapObject = 0;
 		}
 	}
@@ -684,9 +621,9 @@ void SharedMemory( bool enable )
 // -----------------------------------------------------------------------------
 void InitHookData()
 {
-	SharedMemory( true );
-	WM_VOLCHANGE = RegisterWindowMessage( "WM_VOLCHANGE" );
-	SetHook( true ); 
+	SharedMemory(true);
+	WM_VOLCHANGE = RegisterWindowMessage("WM_VOLCHANGE");
+	SetHook(true); 
 }
 
 // -----------------------------------------------------------------------------
@@ -694,19 +631,19 @@ void InitHookData()
 // -----------------------------------------------------------------------------
 void CloseHookData()
 {
-	SetHook( false );
-	SharedMemory( false );
+	SetHook(false);
+	SharedMemory(false);
 }
 
 // -----------------------------------------------------------------------------
 // Инициализация, регистрация и создание главного окна
 // -----------------------------------------------------------------------------
-int CALLBACK WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, 
-					 LPSTR lpCmdLine, int nShowCmd )
+int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, 
+					 LPSTR lpCmdLine, int nShowCmd)
 {
 	// тут проверка на единственный запуск проги, через мютекс
-	CreateMutex( NULL, false, _T("louderit_mutex") );
-	if ( GetLastError() == ERROR_ALREADY_EXISTS )
+	CreateMutex(NULL, false, _T("louderit_mutex"));
+	if (GetLastError() == ERROR_ALREADY_EXISTS)
 		return 0;
 
 	//----------------------------------------------------------------
@@ -726,10 +663,10 @@ int CALLBACK WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	wc.lpszMenuName		= NULL;
 	wc.lpszClassName	= _T("LouderIt");
 
-	if ( RegisterClass( &wc ) == 0 )
-		MessageBox( NULL, _T("Can't RegisterClassEx!"), _T("Error"), MB_OK );
+	if (RegisterClass(&wc) == 0)
+		MessageBox(NULL, _T("Can't RegisterClassEx!"), _T("Error"), MB_OK);
 
-	hwnd = CreateWindow( wc.lpszClassName, "", 0, 0, 0, 0, 0, 0, 0, hInstance, NULL );
+	hwnd = CreateWindow(wc.lpszClassName, "", 0, 0, 0, 0, 0, 0, 0, hInstance, NULL);
 	// -----------------------------------------------------------------------------
 	// Инициализация программы
 	// -----------------------------------------------------------------------------
@@ -737,7 +674,7 @@ int CALLBACK WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	WM_TASKBARCREATED	= RegisterWindowMessage("TaskbarCreated");
 
 
-	if ( isWindowsXP )
+	if (isWindowsXP)
 	{
 		pVolume = CVolumeMxImpl::Create();
 	}
@@ -750,17 +687,17 @@ int CALLBACK WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	InitHookData();
 	LoadConfig();
 
-	pVolume->Init( deviceNumber, hwnd );
+	pVolume->Init(deviceNumber, hwnd);
 
 
 	LoadIcons();
-	SetTrayIcon( NIM_ADD, hIcons[0] );
+	SetTrayIcon(NIM_ADD, hIcons[0]);
 	UpdateTrayIcon();
 
 	// Обработка сообщений программы
 	int		retCode;
 	MSG		msg;
-	while( ( retCode = GetMessage( &msg, NULL, 0, 0 ) ) != 0 )
+	while ((retCode = GetMessage(&msg, NULL, 0, 0)) != 0)
 	{ 
 		if (retCode == -1)
 		{
@@ -768,15 +705,15 @@ int CALLBACK WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		}
 		else
 		{
-			TranslateMessage( &msg ); 
-			DispatchMessage( &msg ); 
+			TranslateMessage(&msg); 
+			DispatchMessage(&msg); 
 		}
 	} 
 	// -----------------------------------------------------------------------------
 	// Подготовка к закрытию программы
 	// -----------------------------------------------------------------------------
 	pVolume->Shutdown();
-	SetTrayIcon( NIM_DELETE, 0 );
+	SetTrayIcon(NIM_DELETE, 0);
 	UnregHotKeys();
 	CloseHookData();
 	return 0;

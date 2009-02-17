@@ -351,26 +351,6 @@
 					>
 				</File>
 			</Filter>
-			<Filter
-				Name="tinyxml"
-				>
-				<File
-					RelativePath="..\base\srñ\tinystr.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\base\srñ\tinyxml.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\base\srñ\tinyxmlerror.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\base\srñ\tinyxmlparser.cpp"
-					>
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -418,18 +398,6 @@
 				</File>
 				<File
 					RelativePath=".\inc\volume_mx_impl.h"
-					>
-				</File>
-			</Filter>
-			<Filter
-				Name="tinyxml"
-				>
-				<File
-					RelativePath="..\base\inc\tinystr.h"
-					>
-				</File>
-				<File
-					RelativePath="..\base\inc\tinyxml.h"
 					>
 				</File>
 			</Filter>
