@@ -11,23 +11,23 @@ public:
 						CVolumeMxImpl();
 	virtual				~CVolumeMxImpl();
 
-	bool				Init( int deviceNumber, HWND hwnd );
+	bool				Init(int deviceNumber, HWND hwnd );
 	void				Shutdown();
 
-	void				SetVolume( int percent );
+	void				SetVolume(int percent );
 	int					GetVolume();
 
-	void				SetMute( bool mute );
+	void				SetMute(bool mute );
 	bool				GetMute();
 
-	void				SetVolumeChannel( int leftChannelVol, int rightChannelVol );
+	void				SetVolumeChannel(int leftChannelVol, int rightChannelVol );
 	int					GetNumDevice();
-	std::string			GetDevName( const int index );
+	std::string			GetDevName(const int index );
 
-	//bool				CheckIdDevice( int idDevice );
+	//bool				CheckIdDevice(int idDevice );
 	static IVolume*		Create()
 	{
-		return static_cast<IVolume*>( new CVolumeMxImpl );
+		return static_cast<IVolume*>(new CVolumeMxImpl );
 	}
 private:
 	enum Channel
