@@ -32,18 +32,16 @@ enum menu_ids
 // -----------------------------------------------------------------------------
 // Данные, отвечающие за реализацию хука на мышь
 // -----------------------------------------------------------------------------
-typedef struct
-{
-	bool	scrollWithTray;		// Вкл./выкл. управление скроллом над треем
-	bool	scrollWithCtrl;
-	bool	scrollWithAlt;
-	bool	scrollWithShift;
-	POINT	lastTrayPos;		// Координаты мыши над треем
-} globalDLLData_t;
 
-static HANDLE			hMapObject = NULL;  // handle to file mapping
+bool	scrollWithTray	= 0;		// Вкл./выкл. управление скроллом над треем
+bool	scrollWithCtrl	= 0;
+bool	scrollWithAlt	= 0;
+bool	scrollWithShift	= 0;
+POINT	lastTrayPos;		// Координаты мыши над треем
 
-UINT					WM_VOLCHANGE		= 0;
+
+
+
 UINT					WM_TASKBARCREATED	= 0;
 UINT					WM_LOADCONFIG		= 0;
 
@@ -68,19 +66,21 @@ int						keyMod = 0;
 
 IVolumeControlPtr		pVolume;
 
-extern "C" __declspec(dllexport) void SetHook(bool enable);
+HHOOK					hHook;
+
+
 //------------------------------------------------------------------------------
 // Setting
 //------------------------------------------------------------------------------
-static globalDLLData_t*		pSharedMem = NULL; // pointer to shared memory
+
 bool						balloonHint = false;
 int							steps = 0;
 int							trayCommands[] = {0,0,0};
 int							balance = 50;
 std::string					deviceName;
 std::string					configFile;
-// TODO:	char configFile[MAX_PATH];
-// ???		char deviceName[256];
+// TODO:	TCHAR configFile[MAX_PATH] = {0};
+// ???		TCHAR deviceName[256] = {0};
 
 
 //------------------------------------------------------------------------------
@@ -148,6 +148,7 @@ void LoadConfig()
 
 	for (int i = 0; n - 1 >= i; i++)
 	{
+		// FIXME: ТУТ КРОЕТСЯ ОШИБКА!!!!!!!
 		if (deviceName.compare(pVolume->GetDevName(i)) == 0)
 		{
 			deviceNumber = i;
@@ -160,32 +161,24 @@ void LoadConfig()
 	// INIT MIXER!
 	// сюда перенести pVolume->Init(...);
 
-
-	// ..баланс
 	balance = GetPrivateProfileInt("General", "Balance", 50, configFile.c_str());
 
 	//...скорости регулирования
 	steps = GetPrivateProfileInt("General", "Steps", 5, configFile.c_str());
 
-
-
 	GetPrivateProfileString("View", "Skin", "Classic.lsk", &skin[0], 1024, configFile.c_str());
 	balloonHint = GetPrivateProfileInt("View", "BalloonHint", 0, configFile.c_str());
 
-	// [Mouse]
-	//...колесика
-	pSharedMem->scrollWithTray = GetPrivateProfileInt("Mouse", "Tray", 1, configFile.c_str());
-	pSharedMem->scrollWithCtrl = GetPrivateProfileInt("Mouse", "Ctrl", 0, configFile.c_str());
-	pSharedMem->scrollWithAlt = GetPrivateProfileInt("Mouse", "Alt", 0, configFile.c_str());
-	pSharedMem->scrollWithShift = GetPrivateProfileInt("Mouse", "Shift", 0, configFile.c_str());
+	scrollWithTray = GetPrivateProfileInt("Mouse", "Tray", 1, configFile.c_str());
+	scrollWithCtrl = GetPrivateProfileInt("Mouse", "Ctrl", 0, configFile.c_str());
+	scrollWithAlt = GetPrivateProfileInt("Mouse", "Alt", 0, configFile.c_str());
+	scrollWithShift = GetPrivateProfileInt("Mouse", "Shift", 0, configFile.c_str());
 
 	//...действий над треем
 	trayCommands[0] = GetPrivateProfileInt("Mouse", "Click", 1, configFile.c_str());
 	trayCommands[1] = GetPrivateProfileInt("Mouse", "DClick", 2, configFile.c_str());
 	trayCommands[2] = GetPrivateProfileInt("Mouse", "MClick", 3, configFile.c_str());
 
-	// [HotKeys]
-	//...горячих клавиш
 	UnregHotKeys();
 	SetHotKey("UpKey", "UpMod", HK_UPKEY);
 	SetHotKey("DownKey", "DownMod", HK_DOWNKEY);
@@ -414,15 +407,13 @@ void VolumeDown()
 	{
 		if (balance > 50)
 		{
-			rightChannelVol = std::max(volumeLevel +
-				(volumeLevel * (50 - balance)) / 50, 0);
+			rightChannelVol = std::max(volumeLevel + (volumeLevel * (50 - balance)) / 50, 0);
 			leftChannelVol = volumeLevel;
 		}
 		else
 		{
 			rightChannelVol = volumeLevel;
-			leftChannelVol = std::max(volumeLevel - 
-				(volumeLevel * (50 - balance)) / 50, 0);
+			leftChannelVol = std::max(volumeLevel - (volumeLevel * (50 - balance)) / 50, 0);
 		}
 		pVolume->SetVolumeChannel(leftChannelVol, rightChannelVol);
 	}
@@ -433,32 +424,7 @@ void VolumeDown()
 //------------------------------------------------------------------------------
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	if (message == WM_VOLCHANGE)
-	{
-		if (lParam == (LPARAM)true)
-		{
-			VolumeUp();
-		}
-		else
-		{
-			VolumeDown();
-		}
-
-		if (balloonHint)
-		{
-			if (!pVolume->GetMute())
-			{
-				ShowBalloon(true, lexical_cast<std::string>(pVolume->GetVolume()) + "%", "Громкость:");
-			}
-			else
-			{
-				ShowBalloon(true, lexical_cast<std::string>(pVolume->GetVolume()) + "% (Выкл.)", "Громкость:");
-			}
-			SetTimer(hWnd, 2, 3000, NULL);
-		}
-	}
-
-	else if (message == WM_LOADCONFIG)
+	if (message == WM_LOADCONFIG)
 	{
 		LoadConfig();
 		LoadIcons();
@@ -513,7 +479,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 
 			case WM_MOUSEMOVE:
-				GetCursorPos(&pSharedMem->lastTrayPos);
+				GetCursorPos(&lastTrayPos);
 				break;
 			}
 		}
@@ -580,59 +546,88 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	return 0;
 }
-void SharedMemory(bool enable)
+//-----------------------------------------------------------------------------
+bool GetKeys()
 {
-	if (enable)
+	if (scrollWithCtrl == false 
+		&& scrollWithAlt == false
+		&& scrollWithShift == false)
 	{
-		hMapObject = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, 
-			PAGE_READWRITE,	0, sizeof(globalDLLData_t), _T("LouderItMMF"));
-		//hMapObject = OpenFileMapping(
-		//	FILE_MAP_ALL_ACCESS,
-		//	FALSE,
-		//	TEXT("LouderItMMF"));
+		return false;
+	}
+	if (
+		(!scrollWithCtrl ^ GetKeyState(VK_LCONTROL) && 128 != 0)
+		&&	(!scrollWithAlt ^ GetKeyState(VK_MENU) && 128 != 0) 
+		&& (!scrollWithShift ^ GetKeyState(VK_SHIFT) && 128 != 0) 
+		)
+		return true;
+	return false;
+}
 
-		if (hMapObject == NULL) 
-			return; 
+LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	HRESULT		hr;	
+	POINT		cursorPos;
 
-		pSharedMem =(globalDLLData_t*) MapViewOfFile(hMapObject, FILE_MAP_ALL_ACCESS,
-			0, 0, 0);
-		if (!pSharedMem)
+	if (nCode < 0)  // do not process the message 
+		return CallNextHookEx(hHook, nCode, wParam, lParam);
+
+
+
+	hr = CallNextHookEx(hHook, nCode, wParam, lParam);
+
+	if ((nCode == HC_ACTION) && (wParam == WM_MOUSEWHEEL)) 
+	{
+		int zDelta = (short) HIWORD(((PMSLLHOOKSTRUCT) lParam)->mouseData);
+
+		GetCursorPos( &cursorPos );
+		if (cursorPos.x == lastTrayPos.x && cursorPos.y == lastTrayPos.y || GetKeys())
 		{
-			CloseHandle(hMapObject);
+
+			if (zDelta >= 0)
+			{
+				//WHEEL_UP
+				VolumeUp();
+			}
+			else
+			{
+				//WHEEL_DOWN
+				VolumeDown();
+			}
+			if (balloonHint)
+			{
+				if (!pVolume->GetMute())
+				{
+					ShowBalloon(true, lexical_cast<std::string>(pVolume->GetVolume()) + "%", "Громкость:");
+				}
+				else
+				{
+					ShowBalloon(true, lexical_cast<std::string>(pVolume->GetVolume()) + "% (Выкл.)", "Громкость:");
+				}
+				SetTimer(hwnd, 2, 3000, NULL);
+			}
+
+			hr = 1;
 		}
+	}
+
+	return hr;
+}
+
+void SetHook(BOOL flag)
+{
+	if (flag) 
+	{
+		hHook = SetWindowsHookEx(WH_MOUSE_LL, LowLevelMouseProc, hInst, 0);
+		if (hHook <= 0) 
+		{
+			MessageBox(hwnd, "SetWindowsHookEx", "Error!", MB_OK | MB_ICONERROR);
+			DestroyWindow(hwnd);
+		}
+
 	}
 	else
-	{
-		if (pSharedMem)
-		{
-			UnmapViewOfFile(pSharedMem);
-			pSharedMem = NULL;
-		}
-		if (hMapObject)
-		{
-			CloseHandle(hMapObject);
-			hMapObject = 0;
-		}
-	}
-
-}
-// -----------------------------------------------------------------------------
-// Инициализация отраженного в памяти файла и установки хука на скролл мыши
-// -----------------------------------------------------------------------------
-void InitHookData()
-{
-	SharedMemory(true);
-	WM_VOLCHANGE = RegisterWindowMessage("WM_VOLCHANGE");
-	SetHook(true); 
-}
-
-// -----------------------------------------------------------------------------
-// Закрытие отраженного в памяти файла и снятие хука на скролл мыши
-// -----------------------------------------------------------------------------
-void CloseHookData()
-{
-	SetHook(false);
-	SharedMemory(false);
+		UnhookWindowsHookEx(hHook);
 }
 
 // -----------------------------------------------------------------------------
@@ -641,7 +636,6 @@ void CloseHookData()
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, 
 					 LPSTR lpCmdLine, int nShowCmd)
 {
-	// тут проверка на единственный запуск проги, через мютекс
 	CreateMutex(NULL, false, _T("louderit_mutex"));
 	if (GetLastError() == ERROR_ALREADY_EXISTS)
 		return 0;
@@ -684,7 +678,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	}
 
 	
-	InitHookData();
+	SetHook(true); 
 	LoadConfig();
 
 	pVolume->Init(deviceNumber, hwnd);
@@ -715,6 +709,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	pVolume->Shutdown();
 	SetTrayIcon(NIM_DELETE, 0);
 	UnregHotKeys();
-	CloseHookData();
+	SetHook(false);
 	return 0;
 }

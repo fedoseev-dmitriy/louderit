@@ -27,11 +27,11 @@ bool CVolumeImpl::Init(int deviceNumber, HWND hwnd)
 	m_hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_INPROC_SERVER, __uuidof(IMMDeviceEnumerator), (LPVOID *)&m_pDeviceEnumerator);
 	EXIT_ON_ERROR(m_hr);
 	
-	//hr = m_pDeviceEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &m_pDefaultDevice);
-	//EXIT_ON_ERROR(hr);
-
-	m_hr = m_pCollection->Item(deviceNumber, &m_pDefaultDevice);
+	m_hr = m_pDeviceEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &m_pDefaultDevice);
 	EXIT_ON_ERROR(m_hr);
+
+	//m_hr = m_pCollection->Item(deviceNumber, &m_pDefaultDevice);
+	//EXIT_ON_ERROR(m_hr);
 	
 	m_hr = m_pDefaultDevice->Activate(__uuidof(IAudioEndpointVolume), CLSCTX_INPROC_SERVER, NULL, (LPVOID *)&m_pEndpointVolume);
 	EXIT_ON_ERROR(m_hr);
