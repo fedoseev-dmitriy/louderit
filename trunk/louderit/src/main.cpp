@@ -1,4 +1,5 @@
 #include "precompiled.h"
+#include "tray.h"
 #include "volume_impl.h"
 #include "volume_mx_impl.h"
 #include "lexical_cast.h"
@@ -8,11 +9,6 @@ enum hotkeys_ids
 	HK_UPKEY = 0,
 	HK_DOWNKEY,
 	HK_MUTEKEY
-};
-
-enum app_msg_ids
-{
-	WM_NOTIFYICON = WM_USER + 1
 };
 
 enum app_ids
@@ -39,9 +35,6 @@ bool	scrollWithAlt	= 0;
 bool	scrollWithShift	= 0;
 POINT	lastTrayPos;		// Координаты мыши над треем
 
-
-
-
 UINT					WM_TASKBARCREATED	= 0;
 UINT					WM_LOADCONFIG		= 0;
 
@@ -66,11 +59,13 @@ int						keyMod = 0;
 
 IVolumeControlPtr		pVolume;
 
+TrayIcon				*pTrayIcon;
+
 HHOOK					hHook;
 
 
 //------------------------------------------------------------------------------
-// Setting
+// Settings
 //------------------------------------------------------------------------------
 
 bool						balloonHint = false;
@@ -203,27 +198,6 @@ void LoadIcons()
 }
 
 //------------------------------------------------------------------------------
-// Установка трея
-//------------------------------------------------------------------------------
-bool SetTrayIcon(DWORD message, HICON hIcon)
-{
-	NOTIFYICONDATA	nid;
-
-	ZeroMemory(&nid, sizeof(NOTIFYICONDATA));
-
-	nid.cbSize				= sizeof(NOTIFYICONDATA);
-	nid.hWnd				= hwnd;
-	nid.uID					= 1;
-	nid.uFlags				= NIF_ICON|NIF_MESSAGE|NIF_TIP;
-	nid.uCallbackMessage	= WM_NOTIFYICON;
-	nid.hIcon				= hIcon;
-
-	strcpy_s(nid.szTip, "LouderIt");
-
-	return Shell_NotifyIcon(message, &nid) != 0 ? true : false;
-}
-
-//------------------------------------------------------------------------------
 // Обновление трея
 //------------------------------------------------------------------------------
 void UpdateTrayIcon()
@@ -233,7 +207,8 @@ void UpdateTrayIcon()
 	
 	if (pVolume->GetMute())
 		iconIndex = iconIndex + 15;
-	SetTrayIcon(NIM_MODIFY, hIcons[iconIndex]);
+
+	pTrayIcon->Update(hIcons[iconIndex]);
 }
 
 //------------------------------------------------------------------------------
@@ -428,13 +403,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		LoadConfig();
 		LoadIcons();
-		SetTrayIcon(NIM_MODIFY, hIcons[iconIndex]);
+		pTrayIcon->Update(hIcons[iconIndex]);
 	}
 
 	else if (message == WM_TASKBARCREATED)
 	{
-		SetTrayIcon(NIM_ADD, hIcons[0]);
-		UpdateTrayIcon();
+		pTrayIcon->Restore();
 	}
 
 	//-----------------------------------------------------------------------------
@@ -447,7 +421,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		//}
 		break;
 
-	case WM_NOTIFYICON:
+	case WM_NOTIFYICONTRAY:
 		{
 			switch (lParam)
 			{
@@ -578,13 +552,11 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 
 	if ((nCode == HC_ACTION) && (wParam == WM_MOUSEWHEEL)) 
 	{
-		int zDelta = (short) HIWORD(((PMSLLHOOKSTRUCT) lParam)->mouseData);
-
 		GetCursorPos( &cursorPos );
 		if (cursorPos.x == lastTrayPos.x && cursorPos.y == lastTrayPos.y || GetKeys())
 		{
 
-			if (zDelta >= 0)
+			if ((short) HIWORD(((PMSLLHOOKSTRUCT) lParam)->mouseData) >= 0) // Delta of mouse wheel
 			{
 				//WHEEL_UP
 				VolumeUp();
@@ -685,7 +657,9 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 
 	LoadIcons();
-	SetTrayIcon(NIM_ADD, hIcons[0]);
+	
+	pTrayIcon = new TrayIcon(hwnd, "LouderIt");
+	pTrayIcon->Set(hIcons[0]);
 	UpdateTrayIcon();
 
 	// Обработка сообщений программы
@@ -707,7 +681,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	// Подготовка к закрытию программы
 	// -----------------------------------------------------------------------------
 	pVolume->Shutdown();
-	SetTrayIcon(NIM_DELETE, 0);
+	pTrayIcon->Remove();
 	UnregHotKeys();
 	SetHook(false);
 	return 0;
