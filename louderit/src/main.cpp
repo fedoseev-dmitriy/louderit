@@ -682,6 +682,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	// -----------------------------------------------------------------------------
 	pVolume->Shutdown();
 	pTrayIcon->Remove();
+	delete pTrayIcon;
 	UnregHotKeys();
 	SetHook(false);
 	return 0;
