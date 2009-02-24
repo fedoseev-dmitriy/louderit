@@ -25,10 +25,7 @@ public:
 	std::string			GetDevName(const int index );
 
 	//bool				CheckIdDevice(int idDevice );
-	static IVolume*		Create()
-	{
-		return static_cast<IVolume*>(new CVolumeMxImpl );
-	}
+
 private:
 	enum Channel
 	{

@@ -57,9 +57,9 @@ bool					isDblClick = false;
 int						hotKey = 0;
 int						keyMod = 0;
 
-IVolumeControlPtr		pVolume;
+IVolume					*pVolume = NULL;
 
-TrayIcon				*pTrayIcon;
+TrayIcon				*pTrayIcon = NULL;
 
 HHOOK					hHook;
 
@@ -203,7 +203,7 @@ void LoadIcons()
 void UpdateTrayIcon()
 {
 	volumeLevel	= pVolume->GetVolume();
-	iconIndex	= volumeLevel * 14 / MAX_VOL ;
+	iconIndex	= volumeLevel * 14 / MAX_VOL;
 	
 	if (pVolume->GetMute())
 		iconIndex = iconIndex + 15;
@@ -579,7 +579,7 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 				SetTimer(hwnd, 2, 3000, NULL);
 			}
 
-			hr = 1;
+			hr = S_FALSE;
 		}
 	}
 
@@ -642,12 +642,13 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 	if (isWindowsXP)
 	{
-		pVolume = CVolumeMxImpl::Create();
+		pVolume = new CVolumeMxImpl;
 	}
-	else
+	else // Vista or Win7
 	{
-		pVolume = CVolumeImpl::Create();
+		pVolume = new CVolumeImpl;
 	}
+	
 
 	
 	SetHook(true); 
@@ -685,5 +686,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	delete pTrayIcon;
 	UnregHotKeys();
 	SetHook(false);
+	delete pVolume;
 	return 0;
 }

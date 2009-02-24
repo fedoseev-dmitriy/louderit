@@ -97,10 +97,6 @@ public:
 	std::string			GetDevName(const int index);
 
 	//bool				CheckIdDevice(int idDevice);
-	static IVolume*		Create()
-	{
-		return static_cast<IVolume*>(new CVolumeImpl);
-	}
 private:
 
 
