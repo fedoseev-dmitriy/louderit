@@ -337,6 +337,10 @@
 				RelativePath="..\base\srñ\Trace.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\src\tray.cpp"
+				>
+			</File>
 			<Filter
 				Name="volume"
 				>
@@ -372,15 +376,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\base\inc\smartptr.h"
-				>
-			</File>
-			<File
 				RelativePath=".\inc\targetver.h"
 				>
 			</File>
 			<File
 				RelativePath="..\base\inc\Trace.h"
+				>
+			</File>
+			<File
+				RelativePath=".\inc\tray.h"
 				>
 			</File>
 			<Filter
