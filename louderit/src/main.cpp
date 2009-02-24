@@ -44,7 +44,6 @@ HWND					hwnd = NULL;
 bool					isWindowsXP = false;
 int						deviceNumber = 0;
 
-std::string				skin;
 HICON					hIcons[NUM_ICONS-1];
 int						iconIndex = 0;
 int						volumeLevel = 0;
@@ -72,10 +71,12 @@ bool						balloonHint = false;
 int							steps = 0;
 int							trayCommands[] = {0,0,0};
 int							balance = 50;
-std::string					deviceName;
-std::string					configFile;
-// TODO:	TCHAR configFile[MAX_PATH] = {0};
-// ???		TCHAR deviceName[256] = {0};
+//std::string					deviceName;
+//std::string					configFile;
+//std::string					skin;
+TCHAR						configFile[MAX_PATH] = {0};
+TCHAR						deviceName[256] = {0};
+TCHAR						skin[256] = {0};
 
 
 //------------------------------------------------------------------------------
@@ -109,10 +110,10 @@ void UnregHotKeys()
 //------------------------------------------------------------------------------
 BOOL SetHotKey(const std::string& SKey, const std::string& SMod, int NumKey)
 {
-	hotKey = GetPrivateProfileInt("HotKeys", SKey.c_str(), 0, configFile.c_str());
+	hotKey = GetPrivateProfileInt("HotKeys", SKey.c_str(), 0, configFile);
 	if (hotKey != 0)
 	{
-		keyMod = GetPrivateProfileInt("HotKeys", SMod.c_str(), 0, configFile.c_str());
+		keyMod = GetPrivateProfileInt("HotKeys", SMod.c_str(), 0, configFile);
 		return RegisterHotKey(hwnd, NumKey, keyMod, hotKey);
 	}
 	return false;
@@ -123,18 +124,13 @@ BOOL SetHotKey(const std::string& SKey, const std::string& SMod, int NumKey)
 //------------------------------------------------------------------------------
 void LoadConfig()
 {
-	configFile.resize(MAX_PATH + 1);
-	int j = GetCurrentDirectory(MAX_PATH, &configFile[0]);
-	configFile.resize(j);
-	configFile += "\\lconfig.ini";
+	GetCurrentDirectory(MAX_PATH, configFile);
+	strcat_s(configFile, _T("\\lconfig.ini"));
 
 	// [General]
 	//...устройства
-	deviceName.resize(MAX_PATH+1);
-	GetPrivateProfileString("General", "Device", 0, &deviceName[0], 1024, configFile.c_str());
-	int sz=deviceName.find(char(0)); 
-	deviceName.resize((sz != -1) ? sz : 0);
-	
+	GetPrivateProfileString("General", "Device", 0, deviceName, 1024, configFile);
+		
 	
 	// [General]
 	int n = pVolume->GetNumDevice();
@@ -144,35 +140,37 @@ void LoadConfig()
 	for (int i = 0; n - 1 >= i; i++)
 	{
 		// FIXME: ТУТ КРОЕТСЯ ОШИБКА!!!!!!!
-		if (deviceName.compare(pVolume->GetDevName(i)) == 0)
+		if (lstrcmp(deviceName, pVolume->GetDevName(i).c_str()) == 0)
 		{
 			deviceNumber = i;
 			break;
 		}
 	}
-	deviceName = pVolume->GetDevName(deviceNumber);
-	TraceA("Using device = %s", deviceName.c_str());
+	lstrcpyn(deviceName, pVolume->GetDevName(deviceNumber).c_str(),
+		sizeof(deviceName)/sizeof(deviceName[0]));
+
+	TraceA("Using device = %s", deviceName);
 
 	// INIT MIXER!
 	// сюда перенести pVolume->Init(...);
 
-	balance = GetPrivateProfileInt("General", "Balance", 50, configFile.c_str());
+	balance = GetPrivateProfileInt("General", "Balance", 50, configFile);
 
 	//...скорости регулирования
-	steps = GetPrivateProfileInt("General", "Steps", 5, configFile.c_str());
+	steps = GetPrivateProfileInt("General", "Steps", 5, configFile);
 
-	GetPrivateProfileString("View", "Skin", "Classic.lsk", &skin[0], 1024, configFile.c_str());
-	balloonHint = GetPrivateProfileInt("View", "BalloonHint", 0, configFile.c_str());
+	GetPrivateProfileString("View", "Skin", "Classic.lsk", &skin[0], 1024, configFile);
+	balloonHint = GetPrivateProfileInt("View", "BalloonHint", 0, configFile);
 
-	scrollWithTray = GetPrivateProfileInt("Mouse", "Tray", 1, configFile.c_str());
-	scrollWithCtrl = GetPrivateProfileInt("Mouse", "Ctrl", 0, configFile.c_str());
-	scrollWithAlt = GetPrivateProfileInt("Mouse", "Alt", 0, configFile.c_str());
-	scrollWithShift = GetPrivateProfileInt("Mouse", "Shift", 0, configFile.c_str());
+	scrollWithTray = GetPrivateProfileInt("Mouse", "Tray", 1, configFile);
+	scrollWithCtrl = GetPrivateProfileInt("Mouse", "Ctrl", 0, configFile);
+	scrollWithAlt = GetPrivateProfileInt("Mouse", "Alt", 0, configFile);
+	scrollWithShift = GetPrivateProfileInt("Mouse", "Shift", 0, configFile);
 
 	//...действий над треем
-	trayCommands[0] = GetPrivateProfileInt("Mouse", "Click", 1, configFile.c_str());
-	trayCommands[1] = GetPrivateProfileInt("Mouse", "DClick", 2, configFile.c_str());
-	trayCommands[2] = GetPrivateProfileInt("Mouse", "MClick", 3, configFile.c_str());
+	trayCommands[0] = GetPrivateProfileInt("Mouse", "Click", 1, configFile);
+	trayCommands[1] = GetPrivateProfileInt("Mouse", "DClick", 2, configFile);
+	trayCommands[2] = GetPrivateProfileInt("Mouse", "MClick", 3, configFile);
 
 	UnregHotKeys();
 	SetHotKey("UpKey", "UpMod", HK_UPKEY);
@@ -184,16 +182,15 @@ void LoadConfig()
 //------------------------------------------------------------------------------
 void LoadIcons()
 {
-	std::string		path;
-	path.resize(MAX_PATH + 1);
-	int n = GetCurrentDirectory(MAX_PATH, &path[0]);
-	path.resize(n);
-	path += "\\skins\\";
-	path += skin.c_str();
+	TCHAR			path[MAX_PATH] = {0};
+
+	GetCurrentDirectory(MAX_PATH, path);
+	strcat_s(path, "\\skins\\");
+	strcat_s(path, skin);
 
 	for (int i = 0; NUM_ICONS - 1 >= i; i++)
 	{
-		hIcons[i] = ExtractIcon(hInst, path.c_str(), i);
+		hIcons[i] = ExtractIcon(hInst, path, i);
 	}
 }
 
