@@ -129,7 +129,7 @@ void LoadConfig()
 
 	// [General]
 	//...устройства
-	GetPrivateProfileString("General", "Device", 0, deviceName, 1024, configFile);
+	GetPrivateProfileString("General", "Device", 0, deviceName, 256, configFile);
 		
 	
 	// [General]
