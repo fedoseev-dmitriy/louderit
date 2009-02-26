@@ -6,17 +6,17 @@
 class TrayIcon
 {
 public:
-	TrayIcon(HWND hWnd, LPCTSTR szTip);
+	TrayIcon(HWND hWnd);
 	virtual			~TrayIcon();
 
-	bool			Set(HICON hIcon);
-	bool			Update(HICON hIcon);
+	bool			Set(HICON hIcon, LPCTSTR szTip);
+	bool			Update(HICON hIcon, LPCTSTR szTip);
 	bool			Remove();
 	bool			Restore();
+	bool			ShowBaloon(LPCTSTR szInfo, LPCTSTR szInfoTitle);
 
 protected:
 	const HWND m_hWnd;
-	const LPCTSTR m_szTip;
 	bool m_Setted;
 
 private:
