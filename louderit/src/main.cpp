@@ -44,7 +44,7 @@ HWND					hwnd = NULL;
 bool					isWindowsXP = false;
 int						deviceNumber = 0;
 
-HICON					hIcons[NUM_ICONS-1];
+HICON					hIcons[NUM_ICONS];
 int						iconIndex = 0;
 int						volumeLevel = 0;
 
@@ -182,13 +182,14 @@ void LoadConfig()
 //------------------------------------------------------------------------------
 void LoadIcons()
 {
+	
 	TCHAR			path[MAX_PATH] = {0};
 
 	GetCurrentDirectory(MAX_PATH, path);
 	strcat_s(path, "\\skins\\");
 	strcat_s(path, skin);
-
-	for (int i = 0; NUM_ICONS - 1 >= i; i++)
+	
+	for (int i = 0; i < NUM_ICONS; i++)
 	{
 		hIcons[i] = ExtractIcon(hInst, path, i);
 	}
@@ -205,11 +206,11 @@ void UpdateTrayIcon()
 	if (pVolume->GetMute())
 		iconIndex = iconIndex + 15;
 
-	pTrayIcon->Update(hIcons[iconIndex]);
+	pTrayIcon->Update(hIcons[iconIndex], "LouderIt");
 }
 
 //------------------------------------------------------------------------------
-bool ShowBalloon(BOOL flag, const std::string& balloonText,
+/*bool ShowBalloon(BOOL flag, const std::string& balloonText,
 				 const std::string& balloonTitle)
 {
 	NOTIFYICONDATA nid;
@@ -232,7 +233,8 @@ bool ShowBalloon(BOOL flag, const std::string& balloonText,
 		strcpy_s(nid.szInfo, "");
 	}
 	return Shell_NotifyIcon(NIM_MODIFY, &nid) != 0 ? true : false;
-}
+	 
+}*/
 
 //-----------------------------------------------------------------------------
 std::string GetMixerCmdLine()
@@ -400,7 +402,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		LoadConfig();
 		LoadIcons();
-		pTrayIcon->Update(hIcons[iconIndex]);
+		pTrayIcon->Update(hIcons[iconIndex], "LouderIt");
 	}
 
 	else if (message == WM_TASKBARCREATED)
@@ -473,7 +475,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		if (wParam == 2)
 		{
 			KillTimer(hWnd, 2);
-			ShowBalloon(true, "", "");
+			//ShowBalloon(true, "", "");
+			pTrayIcon->ShowBaloon("", "");
 		}
 		break;
 
@@ -493,13 +496,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			if (balloonHint)
 			{
+				std::string str_on = lexical_cast<std::string>(pVolume->GetVolume()) + "%";
 				if (!pVolume->GetMute())
 				{
-					ShowBalloon(true, lexical_cast<std::string>(pVolume->GetVolume()) + "%", "Громкость:");
+					//ShowBalloon(true, lexical_cast<std::string>(pVolume->GetVolume()) + "%", "Громкость:");
+					pTrayIcon->ShowBaloon((lexical_cast<std::string>(pVolume->GetVolume()) + "%").c_str(), "Громкость:");
 				}
 				else
 				{
-					ShowBalloon(true, lexical_cast<std::string>(pVolume->GetVolume()) + "% (Выкл.)", "Громкость:");
+					//ShowBalloon(true, lexical_cast<std::string>(pVolume->GetVolume()) + "% (Выкл.)", "Громкость:");
+					pTrayIcon->ShowBaloon((lexical_cast<std::string>(pVolume->GetVolume()) + "% (Выкл.)").c_str(), "Громкость:");
 				}
 				SetTimer(hWnd, 2, 3000, NULL);
 			}
@@ -567,11 +573,14 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 			{
 				if (!pVolume->GetMute())
 				{
-					ShowBalloon(true, lexical_cast<std::string>(pVolume->GetVolume()) + "%", "Громкость:");
+					//ShowBalloon(true, lexical_cast<std::string>(pVolume->GetVolume()) + "%", "Громкость:");
+					pTrayIcon->ShowBaloon((lexical_cast<std::string>(pVolume->GetVolume()) + "%").c_str(), "Громкость:");
+
 				}
 				else
 				{
-					ShowBalloon(true, lexical_cast<std::string>(pVolume->GetVolume()) + "% (Выкл.)", "Громкость:");
+					//ShowBalloon(true, lexical_cast<std::string>(pVolume->GetVolume()) + "% (Выкл.)", "Громкость:");
+					pTrayIcon->ShowBaloon((lexical_cast<std::string>(pVolume->GetVolume()) + "% (Выкл.)").c_str(), "Громкость:");
 				}
 				SetTimer(hwnd, 2, 3000, NULL);
 			}
@@ -656,8 +665,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 	LoadIcons();
 	
-	pTrayIcon = new TrayIcon(hwnd, "LouderIt");
-	pTrayIcon->Set(hIcons[0]);
+	pTrayIcon = new TrayIcon(hwnd);
+	pTrayIcon->Set(hIcons[0], "LouderIt");
 	UpdateTrayIcon();
 
 	// Обработка сообщений программы

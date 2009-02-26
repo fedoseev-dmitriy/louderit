@@ -2,9 +2,8 @@
 #include "tray.h"
 
 //-----------------------------------------------------------------------------
-TrayIcon::TrayIcon(HWND hWnd, LPCTSTR szTip):
+TrayIcon::TrayIcon(HWND hWnd):
 	m_hWnd(hWnd),
-	m_szTip(szTip),
 	m_Setted(false)
 {
 
@@ -17,7 +16,7 @@ TrayIcon::~TrayIcon()
 }
 
 //-----------------------------------------------------------------------------
-bool TrayIcon::Set(HICON hIcon)
+bool TrayIcon::Set(HICON hIcon, LPCTSTR szTip)
 {
 	if (m_Setted)
 		return false;
@@ -30,19 +29,21 @@ bool TrayIcon::Set(HICON hIcon)
     nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     nid.uCallbackMessage = WM_NOTIFYICONTRAY;
     nid.hIcon = hIcon;
-    lstrcpyn(nid.szTip, m_szTip, sizeof(nid.szTip));
-	
+    lstrcpyn(nid.szTip, szTip, sizeof(nid.szTip));
+		
 	return (m_Setted = Shell_NotifyIcon(NIM_ADD, &nid));
 }
 
 //-----------------------------------------------------------------------------
-bool TrayIcon::Update(HICON hIcon)
+bool TrayIcon::Update(HICON hIcon, LPCTSTR szTip)
 {
 	
 	if (!m_Setted)
 		return false;
 	
+	nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
 	nid.hIcon = hIcon;
+	lstrcpyn(nid.szTip, szTip, sizeof(nid.szTip));
 
 	return (m_Setted = Shell_NotifyIcon(NIM_MODIFY, &nid));
 }
@@ -64,5 +65,19 @@ bool TrayIcon::Restore()
 
 	m_Setted = false;
 
-	return Set(nid.hIcon);
+	return Set(nid.hIcon, nid.szTip);
+}
+
+//-----------------------------------------------------------------------------
+bool TrayIcon::ShowBaloon(LPCTSTR szInfo, LPCTSTR szInfoTitle)
+{
+	if (!m_Setted)
+		return false;
+
+	nid.uFlags = NIF_INFO;
+	lstrcpyn(nid.szInfo, szInfo, sizeof(nid.szInfo));
+	nid.uTimeout = 0;
+	lstrcpyn(nid.szInfoTitle, szInfoTitle, sizeof(nid.szInfoTitle));
+
+	return (m_Setted = Shell_NotifyIcon(NIM_MODIFY, &nid));
 }
