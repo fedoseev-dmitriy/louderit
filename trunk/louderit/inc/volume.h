@@ -19,7 +19,7 @@ public:
 	virtual bool	GetMute() = 0;
 
 	virtual int		GetNumDevice() = 0;
-	virtual std::string	GetDevName(const int index) = 0;
+	virtual string	GetDevName(const int index) = 0;
 
 	//virtual bool	CheckIdDevice(int idDevice) = 0;
 

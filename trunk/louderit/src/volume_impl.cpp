@@ -133,9 +133,9 @@ int CVolumeImpl::GetNumDevice()
 }
 
 //-----------------------------------------------------------------------------
-std::string CVolumeImpl::GetDevName(const int index)
+string CVolumeImpl::GetDevName(const int index)
 {
-	std::string		s;
+	string		s;
 	IMMDevice		*pEndpoint = NULL;
 	IPropertyStore	*pProps = NULL;
 

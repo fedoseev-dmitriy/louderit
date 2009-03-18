@@ -23,7 +23,7 @@ bool TrayIcon::Set(HICON hIcon, LPCTSTR szTip)
 
 	ZeroMemory(&nid, sizeof(NOTIFYICONDATA));
 	
-	nid.cbSize = sizeof(NOTIFYICONDATA);
+	nid.cbSize = NOTIFYICONDATA_V2_SIZE;
     nid.hWnd = m_hWnd;
     nid.uID = 0;
     nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
