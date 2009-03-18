@@ -158,7 +158,7 @@ int CVolumeMxImpl::GetNumDevice()
 }
 
 //-----------------------------------------------------------------------------
-std::string CVolumeMxImpl::GetDevName(const int index)
+string CVolumeMxImpl::GetDevName(const int index)
 {
 	MIXERCAPS Caps;
 

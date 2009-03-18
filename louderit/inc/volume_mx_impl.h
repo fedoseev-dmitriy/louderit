@@ -22,7 +22,7 @@ public:
 
 	void				SetVolumeChannel(int leftChannelVol, int rightChannelVol );
 	int					GetNumDevice();
-	std::string			GetDevName(const int index );
+	string				GetDevName(const int index );
 
 	//bool				CheckIdDevice(int idDevice );
 

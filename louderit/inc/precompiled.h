@@ -38,4 +38,5 @@
 
 #include "Trace.h"
 
+using namespace std;
 

@@ -71,9 +71,7 @@ bool						balloonHint = false;
 int							steps = 0;
 int							trayCommands[] = {0,0,0};
 int							balance = 50;
-//std::string					deviceName;
-//std::string					configFile;
-//std::string					skin;
+
 TCHAR						configFile[MAX_PATH] = {0};
 TCHAR						deviceName[256] = {0};
 TCHAR						skin[256] = {0};
@@ -108,7 +106,7 @@ void UnregHotKeys()
 //------------------------------------------------------------------------------
 // Установка горячих клавиш
 //------------------------------------------------------------------------------
-BOOL SetHotKey(const std::string& SKey, const std::string& SMod, int NumKey)
+BOOL SetHotKey(const string& SKey, const string& SMod, int NumKey)
 {
 	hotKey = GetPrivateProfileInt("HotKeys", SKey.c_str(), 0, configFile);
 	if (hotKey != 0)
@@ -210,8 +208,8 @@ void UpdateTrayIcon()
 }
 
 //------------------------------------------------------------------------------
-/*bool ShowBalloon(BOOL flag, const std::string& balloonText,
-				 const std::string& balloonTitle)
+/*bool ShowBalloon(BOOL flag, const string& balloonText,
+				 const string& balloonTitle)
 {
 	NOTIFYICONDATA nid;
 
@@ -237,9 +235,9 @@ void UpdateTrayIcon()
 }*/
 
 //-----------------------------------------------------------------------------
-std::string GetMixerCmdLine()
+string GetMixerCmdLine()
 {
-	std::string str = "sndvol32.exe -d " + lexical_cast<std::string>(deviceNumber);
+	string str = "sndvol32.exe -d " + lexical_cast<string>(deviceNumber);
 	return str;
 }
 
@@ -341,7 +339,7 @@ void VolumeUp()
 	int rightChannelVol	= 0;
 	int leftChannelVol	= 0;
 
-	volumeLevel = std::min((volumeLevel + steps), MAX_VOL);
+	volumeLevel = min((volumeLevel + steps), MAX_VOL);
 
 	if (balance == 50)
 	{
@@ -352,13 +350,13 @@ void VolumeUp()
 	{
 		if (balance > 50)
 		{
-			leftChannelVol = std::max(volumeLevel + (volumeLevel * (50 - balance)) / 50, 0);
+			leftChannelVol = max(volumeLevel + (volumeLevel * (50 - balance)) / 50, 0);
 			rightChannelVol = volumeLevel;
 		}
 		else
 		{
 			leftChannelVol = volumeLevel;
-			rightChannelVol = std::max(volumeLevel - (volumeLevel * (50 - balance)) / 50, 0);
+			rightChannelVol = max(volumeLevel - (volumeLevel * (50 - balance)) / 50, 0);
 		}
 		pVolume->SetVolumeChannel(leftChannelVol, rightChannelVol);
 	}
@@ -370,7 +368,7 @@ void VolumeDown()
 	int rightChannelVol = 0;
 	int leftChannelVol	= 0;
 	
-	volumeLevel = std::max((volumeLevel - steps), 0);
+	volumeLevel = max((volumeLevel - steps), 0);
 
 	if (balance == 50)
 	{
@@ -381,13 +379,13 @@ void VolumeDown()
 	{
 		if (balance > 50)
 		{
-			rightChannelVol = std::max(volumeLevel + (volumeLevel * (50 - balance)) / 50, 0);
+			rightChannelVol = max(volumeLevel + (volumeLevel * (50 - balance)) / 50, 0);
 			leftChannelVol = volumeLevel;
 		}
 		else
 		{
 			rightChannelVol = volumeLevel;
-			leftChannelVol = std::max(volumeLevel - (volumeLevel * (50 - balance)) / 50, 0);
+			leftChannelVol = max(volumeLevel - (volumeLevel * (50 - balance)) / 50, 0);
 		}
 		pVolume->SetVolumeChannel(leftChannelVol, rightChannelVol);
 	}
@@ -496,16 +494,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			if (balloonHint)
 			{
-				std::string str_on = lexical_cast<std::string>(pVolume->GetVolume()) + "%";
+				string str_on = lexical_cast<string>(pVolume->GetVolume()) + "%";
 				if (!pVolume->GetMute())
 				{
-					//ShowBalloon(true, lexical_cast<std::string>(pVolume->GetVolume()) + "%", "Громкость:");
-					pTrayIcon->ShowBaloon((lexical_cast<std::string>(pVolume->GetVolume()) + "%").c_str(), "Громкость:");
+					//ShowBalloon(true, lexical_cast<string>(pVolume->GetVolume()) + "%", "Громкость:");
+					pTrayIcon->ShowBaloon((lexical_cast<string>(pVolume->GetVolume()) + "%").c_str(), "Громкость:");
 				}
 				else
 				{
-					//ShowBalloon(true, lexical_cast<std::string>(pVolume->GetVolume()) + "% (Выкл.)", "Громкость:");
-					pTrayIcon->ShowBaloon((lexical_cast<std::string>(pVolume->GetVolume()) + "% (Выкл.)").c_str(), "Громкость:");
+					//ShowBalloon(true, lexical_cast<string>(pVolume->GetVolume()) + "% (Выкл.)", "Громкость:");
+					pTrayIcon->ShowBaloon((lexical_cast<string>(pVolume->GetVolume()) + "% (Выкл.)").c_str(), "Громкость:");
 				}
 				SetTimer(hWnd, 2, 3000, NULL);
 			}
@@ -561,26 +559,24 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 
 			if ((short) HIWORD(((PMSLLHOOKSTRUCT) lParam)->mouseData) >= 0) // Delta of mouse wheel
 			{
-				//WHEEL_UP
 				VolumeUp();
 			}
 			else
 			{
-				//WHEEL_DOWN
 				VolumeDown();
 			}
 			if (balloonHint)
 			{
 				if (!pVolume->GetMute())
 				{
-					//ShowBalloon(true, lexical_cast<std::string>(pVolume->GetVolume()) + "%", "Громкость:");
-					pTrayIcon->ShowBaloon((lexical_cast<std::string>(pVolume->GetVolume()) + "%").c_str(), "Громкость:");
+					//ShowBalloon(true, lexical_cast<string>(pVolume->GetVolume()) + "%", "Громкость:");
+					pTrayIcon->ShowBaloon((lexical_cast<string>(pVolume->GetVolume()) + "%").c_str(), "Громкость:");
 
 				}
 				else
 				{
-					//ShowBalloon(true, lexical_cast<std::string>(pVolume->GetVolume()) + "% (Выкл.)", "Громкость:");
-					pTrayIcon->ShowBaloon((lexical_cast<std::string>(pVolume->GetVolume()) + "% (Выкл.)").c_str(), "Громкость:");
+					//ShowBalloon(true, lexical_cast<string>(pVolume->GetVolume()) + "% (Выкл.)", "Громкость:");
+					pTrayIcon->ShowBaloon((lexical_cast<string>(pVolume->GetVolume()) + "% (Выкл.)").c_str(), "Громкость:");
 				}
 				SetTimer(hwnd, 2, 3000, NULL);
 			}

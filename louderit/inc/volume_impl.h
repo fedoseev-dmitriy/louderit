@@ -94,7 +94,7 @@ public:
 
 	void				SetVolumeChannel(int leftChannelVol, int rightChannelVol);
 	int					GetNumDevice();
-	std::string			GetDevName(const int index);
+	string			GetDevName(const int index);
 
 	//bool				CheckIdDevice(int idDevice);
 private:
@@ -117,10 +117,10 @@ private:
 	};
 };
 
-template <typename _anystr> std::string WideToAnsi(const _anystr src, DWORD codepage=CP_ACP)
+template <typename _anystr> string WideToAnsi(const _anystr src, DWORD codepage=CP_ACP)
 {
-	std::wstring s = src;
-	std::string res;
+	wstring s = src;
+	string res;
 	PCHAR buf;
 	size_t l, j;
 
