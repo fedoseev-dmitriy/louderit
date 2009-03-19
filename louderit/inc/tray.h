@@ -6,7 +6,7 @@
 class TrayIcon
 {
 public:
-	TrayIcon(HWND hWnd);
+					TrayIcon(HWND hWnd);
 	virtual			~TrayIcon();
 
 	bool			Set(HICON hIcon, LPCTSTR szTip);
@@ -16,9 +16,9 @@ public:
 	bool			ShowBaloon(LPCTSTR szInfo, LPCTSTR szInfoTitle);
 
 protected:
-	const HWND m_hWnd;
-	bool m_Setted;
+	const HWND		m_hWnd;
+	bool			m_Setted;
 
 private:
-	NOTIFYICONDATA nid;
+	NOTIFYICONDATA	nid;
 };
