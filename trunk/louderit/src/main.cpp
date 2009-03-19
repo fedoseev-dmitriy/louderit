@@ -11,11 +11,6 @@ enum hotkeys_ids
 	HK_MUTEKEY
 };
 
-enum app_ids
-{
-	NUM_ICONS = 30
-};
-
 enum menu_ids
 {
 	IDM_OPEN_VOLUME_CONTROL = 40001,
@@ -44,9 +39,10 @@ HWND					hwnd = NULL;
 bool					isWindowsXP = false;
 int						deviceNumber = 0;
 
-HICON					hIcons[NUM_ICONS];
+vector<HICON>			hIcons;
 int						iconIndex = 0;
 int						volumeLevel = 0;
+int 					numIcons = 0;
 
 // Для различия двойного и одиночного клика
 bool					isClickStart = false;
@@ -80,7 +76,7 @@ TCHAR						skin[256] = {0};
 //------------------------------------------------------------------------------
 // Return true - XP, return false - Vista or later
 //------------------------------------------------------------------------------
-bool checkXP()
+bool CheckXP()
 {
 	bool				preVista;
 	OSVERSIONINFO		osvi;
@@ -180,16 +176,18 @@ void LoadConfig()
 //------------------------------------------------------------------------------
 void LoadIcons()
 {
-	
 	TCHAR			path[MAX_PATH] = {0};
 
 	GetCurrentDirectory(MAX_PATH, path);
 	strcat_s(path, "\\skins\\");
 	strcat_s(path, skin);
-	
-	for (int i = 0; i < NUM_ICONS; i++)
+
+	//get number of icons contained in the skin 
+	numIcons = ExtractIconEx(path, -1, NULL, NULL, 0);
+
+	for (int i = 0; i < numIcons; i++)
 	{
-		hIcons[i] = ExtractIcon(hInst, path, i);
+		hIcons.push_back(ExtractIcon(hInst, path, i));
 	}
 }
 
@@ -199,10 +197,10 @@ void LoadIcons()
 void UpdateTrayIcon()
 {
 	volumeLevel	= pVolume->GetVolume();
-	iconIndex	= volumeLevel * 14 / MAX_VOL;
+	iconIndex	= volumeLevel * (numIcons / 2 - 1) / MAX_VOL;
 	
 	if (pVolume->GetMute())
-		iconIndex = iconIndex + 15;
+		iconIndex = iconIndex + (numIcons / 2);
 
 	pTrayIcon->Update(hIcons[iconIndex], "LouderIt");
 }
@@ -615,7 +613,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		return 0;
 
 	//----------------------------------------------------------------
-	isWindowsXP = checkXP();
+	isWindowsXP = CheckXP();
 	hInst = hInstance;
 
 	WNDCLASS wc;
@@ -631,16 +629,17 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	wc.lpszMenuName		= NULL;
 	wc.lpszClassName	= _T("LouderIt");
 
-	if (RegisterClass(&wc) == 0)
-		MessageBox(NULL, _T("Can't RegisterClassEx!"), _T("Error"), MB_OK);
-
+	RegisterClass(&wc);
 	hwnd = CreateWindow(wc.lpszClassName, "", 0, 0, 0, 0, 0, 0, 0, hInstance, NULL);
+	if (!hwnd)
+	{
+		return 0;
+	}
 	// -----------------------------------------------------------------------------
 	// Инициализация программы
 	// -----------------------------------------------------------------------------
 	WM_LOADCONFIG		= RegisterWindowMessage("WM_LOADCONFIG");
 	WM_TASKBARCREATED	= RegisterWindowMessage("TaskbarCreated");
-
 
 	if (isWindowsXP)
 	{
@@ -651,13 +650,10 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		pVolume = new CVolumeImpl;
 	}
 	
-
-	
 	SetHook(true); 
 	LoadConfig();
 
 	pVolume->Init(deviceNumber, hwnd);
-
 
 	LoadIcons();
 	
