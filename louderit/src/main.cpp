@@ -68,11 +68,25 @@ int							steps = 0;
 int							trayCommands[] = {0,0,0};
 int							balance = 50;
 
-TCHAR						configFile[MAX_PATH] = {0};
-TCHAR						deviceName[256] = {0};
-TCHAR						skin[256] = {0};
+wchar_t						config_file[MAX_PATH] = {0};
+wchar_t						device_name[256] = {0};
+wchar_t						skin[256] = {0};
 
+//-----------------------------------------------------------------------------
+bool Launch(const wchar_t* command_line)
+{
+	STARTUPINFO	si = {sizeof(si)};
+	PROCESS_INFORMATION	pi;
 
+	if ( CreateProcess(NULL, const_cast<wchar_t*>(command_line), NULL, NULL, FALSE,
+		0, NULL, NULL, &si, &pi))
+	{
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+		return true;
+	}
+	return false;
+}
 //------------------------------------------------------------------------------
 // Return true - XP, return false - Vista or later
 //------------------------------------------------------------------------------
@@ -102,12 +116,12 @@ void UnregHotKeys()
 //------------------------------------------------------------------------------
 // Установка горячих клавиш
 //------------------------------------------------------------------------------
-BOOL SetHotKey(const string& SKey, const string& SMod, int NumKey)
+BOOL SetHotKey(const wstring& SKey, const wstring& SMod, int NumKey)
 {
-	hotKey = GetPrivateProfileInt("HotKeys", SKey.c_str(), 0, configFile);
+	hotKey = GetPrivateProfileInt(L"HotKeys", SKey.c_str(), 0, config_file);
 	if (hotKey != 0)
 	{
-		keyMod = GetPrivateProfileInt("HotKeys", SMod.c_str(), 0, configFile);
+		keyMod = GetPrivateProfileInt(L"HotKeys", SMod.c_str(), 0, config_file);
 		return RegisterHotKey(hwnd, NumKey, keyMod, hotKey);
 	}
 	return false;
@@ -118,74 +132,70 @@ BOOL SetHotKey(const string& SKey, const string& SMod, int NumKey)
 //------------------------------------------------------------------------------
 void LoadConfig()
 {
-	GetCurrentDirectory(MAX_PATH, configFile);
-	strcat_s(configFile, _T("\\lconfig.ini"));
+	GetCurrentDirectory(MAX_PATH, config_file);
+	_tcscat_s(config_file, L"\\lconfig.ini");
 
 	// [General]
 	//...устройства
-	GetPrivateProfileString("General", "Device", 0, deviceName, 256, configFile);
+	GetPrivateProfileString(L"General", L"Device", 0, device_name, 256, config_file);
 		
 	
 	// [General]
 	int n = pVolume->GetNumDevice();
 
-	TraceA("GetNumDevice = %i", n);
-
-	for (int i = 0; n - 1 >= i; i++)
+	for (int i = 0; n - 1 >= i; ++i)
 	{
 		// FIXME: ТУТ КРОЕТСЯ ОШИБКА!!!!!!!
-		if (lstrcmp(deviceName, pVolume->GetDevName(i).c_str()) == 0)
+		if (lstrcmp(device_name, pVolume->GetDeviceName(i).c_str()) == 0)
 		{
 			deviceNumber = i;
 			break;
 		}
 	}
-	lstrcpyn(deviceName, pVolume->GetDevName(deviceNumber).c_str(),
-		sizeof(deviceName)/sizeof(deviceName[0]));
-
-	TraceA("Using device = %s", deviceName);
+	lstrcpyn(device_name, pVolume->GetDeviceName(deviceNumber).c_str(),
+		sizeof(device_name)/sizeof(device_name[0]));
 
 	// INIT MIXER!
 	// сюда перенести pVolume->Init(...);
 
-	balance = GetPrivateProfileInt("General", "Balance", 50, configFile);
+	balance = GetPrivateProfileInt(L"General", L"Balance", 50, config_file);
 
 	//...скорости регулирования
-	steps = GetPrivateProfileInt("General", "Steps", 5, configFile);
+	steps = GetPrivateProfileInt(L"General", L"Steps", 5, config_file);
 
-	GetPrivateProfileString("View", "Skin", "Classic.lsk", &skin[0], 1024, configFile);
-	balloonHint = GetPrivateProfileInt("View", "BalloonHint", 0, configFile);
+	GetPrivateProfileString(L"View", L"Skin", L"Classic.lsk", &skin[0], 1024, config_file);
+	balloonHint = GetPrivateProfileInt(L"View", L"BalloonHint", 0, config_file);
 
-	scrollWithTray = GetPrivateProfileInt("Mouse", "Tray", 1, configFile);
-	scrollWithCtrl = GetPrivateProfileInt("Mouse", "Ctrl", 0, configFile);
-	scrollWithAlt = GetPrivateProfileInt("Mouse", "Alt", 0, configFile);
-	scrollWithShift = GetPrivateProfileInt("Mouse", "Shift", 0, configFile);
+	scrollWithTray = GetPrivateProfileInt(L"Mouse", L"Tray", 1, config_file);
+	scrollWithCtrl = GetPrivateProfileInt(L"Mouse", L"Ctrl", 0, config_file);
+	scrollWithAlt = GetPrivateProfileInt(L"Mouse", L"Alt", 0, config_file);
+	scrollWithShift = GetPrivateProfileInt(L"Mouse", L"Shift", 0, config_file);
 
 	//...действий над треем
-	trayCommands[0] = GetPrivateProfileInt("Mouse", "Click", 1, configFile);
-	trayCommands[1] = GetPrivateProfileInt("Mouse", "DClick", 2, configFile);
-	trayCommands[2] = GetPrivateProfileInt("Mouse", "MClick", 3, configFile);
+	trayCommands[0] = GetPrivateProfileInt(L"Mouse", L"Click", 1, config_file);
+	trayCommands[1] = GetPrivateProfileInt(L"Mouse", L"DClick", 2, config_file);
+	trayCommands[2] = GetPrivateProfileInt(L"Mouse", L"MClick", 3, config_file);
 
 	UnregHotKeys();
-	SetHotKey("UpKey", "UpMod", HK_UPKEY);
-	SetHotKey("DownKey", "DownMod", HK_DOWNKEY);
-	SetHotKey("MuteKey", "MuteMod", HK_MUTEKEY);
+	SetHotKey(L"UpKey", L"UpMod", HK_UPKEY);
+	SetHotKey(L"DownKey", L"DownMod", HK_DOWNKEY);
+	SetHotKey(L"MuteKey", L"MuteMod", HK_MUTEKEY);
 }
 //------------------------------------------------------------------------------
 // Загрузка иконок
 //------------------------------------------------------------------------------
 void LoadIcons()
 {
-	TCHAR			path[MAX_PATH] = {0};
+	wchar_t			path[MAX_PATH] = {0};
 
 	GetCurrentDirectory(MAX_PATH, path);
-	strcat_s(path, "\\skins\\");
-	strcat_s(path, skin);
+	_tcscat_s(path, L"\\skins\\");
+	_tcscat_s(path, skin);
 
 	//get number of icons contained in the skin 
 	numIcons = ExtractIconEx(path, -1, NULL, NULL, 0);
 
-	for (int i = 0; i < numIcons; i++)
+	for (int i = 0; i < numIcons; ++i)
 	{
 		hIcons.push_back(ExtractIcon(hInst, path, i));
 	}
@@ -202,40 +212,13 @@ void UpdateTrayIcon()
 	if (pVolume->GetMute())
 		iconIndex = iconIndex + (numIcons / 2);
 
-	pTrayIcon->Update(hIcons[iconIndex], "LouderIt");
+	pTrayIcon->Update(hIcons[iconIndex], L"LouderIt");
 }
 
-//------------------------------------------------------------------------------
-/*bool ShowBalloon(BOOL flag, const string& balloonText,
-				 const string& balloonTitle)
-{
-	NOTIFYICONDATA nid;
-
-	ZeroMemory(&nid, sizeof(NOTIFYICONDATA));
-
-	nid.cbSize	= sizeof(NOTIFYICONDATA);
-	nid.hWnd	= hwnd;
-	nid.uID		= 1;
-	nid.uFlags	= NIF_INFO;
-	//strcpy_s(nid.szTip, "");
-	if (flag)
-	{
-		strcpy_s(nid.szInfo, balloonText.c_str());
-		nid.uTimeout = 0;
-		strcpy_s(nid.szInfoTitle, balloonTitle.c_str());
-	}
-	else
-	{
-		strcpy_s(nid.szInfo, "");
-	}
-	return Shell_NotifyIcon(NIM_MODIFY, &nid) != 0 ? true : false;
-	 
-}*/
-
 //-----------------------------------------------------------------------------
-string GetMixerCmdLine()
+wstring GetMixerCmdLine()
 {
-	string str = "sndvol32.exe -d " + lexical_cast<string>(deviceNumber);
+	wstring str = L"sndvol32.exe -d " + lexical_cast<wstring>(deviceNumber);
 	return str;
 }
 
@@ -247,13 +230,13 @@ void ProcessPopupMenu()
 	UINT	command;
 
 	hMenu	= CreatePopupMenu();
-	AppendMenu(hMenu, MF_STRING, IDM_OPEN_VOLUME_CONTROL, _T("Открыть &регулятор громкости"));
-	AppendMenu(hMenu, MF_STRING, IDM_SETTING_AUDIO_PARAMETR, _T("Настройка &аудиопараметров"));
+	AppendMenu(hMenu, MF_STRING, IDM_OPEN_VOLUME_CONTROL, L"Открыть &регулятор громкости");
+	AppendMenu(hMenu, MF_STRING, IDM_SETTING_AUDIO_PARAMETR, L"Настройка &аудиопараметров");
 	AppendMenu(hMenu, MF_SEPARATOR, 0, NULL) ;
-	AppendMenu(hMenu, MF_STRING, IDM_SETTING_PROGRAM, _T("&Настройки программы"));
+	AppendMenu(hMenu, MF_STRING, IDM_SETTING_PROGRAM, L"&Настройки программы");
 	AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
-	//AppendMenu(hMenu, MF_STRING, IDM_ABOUT, _T("&О программе..."));
-	AppendMenu(hMenu, MF_STRING, IDM_EXIT, _T("&Выход"));
+	//AppendMenu(hMenu, MF_STRING, IDM_ABOUT, L"&О программе...");
+	AppendMenu(hMenu, MF_STRING, IDM_EXIT, L"&Выход");
 
 	SetForegroundWindow(hwnd);
 	GetCursorPos(&cursorPos);
@@ -269,22 +252,22 @@ void ProcessPopupMenu()
 		{
 			if (isWindowsXP)
 			{
-				WinExec(GetMixerCmdLine().c_str(), SW_SHOWNORMAL);
+				Launch(GetMixerCmdLine().c_str());
 			}
 			else
 			{
-				WinExec("sndvol.exe", SW_SHOWNORMAL);
+				Launch(L"sndvol.exe");
 			}
 			break;
 		}
 	case IDM_SETTING_AUDIO_PARAMETR:
-		WinExec("rundll32.exe shell32.dll,Control_RunDLL mmsys.cpl", SW_SHOWNORMAL);
+		Launch(L"rundll32.exe shell32.dll,Control_RunDLL mmsys.cpl");
 		break;
 	case IDM_SETTING_PROGRAM:
-		WinExec("LConfig.exe", SW_SHOWNORMAL);
+		Launch(L"LConfig.exe");
 		break;
 		//case IDM_ABOUT:
-		//  WinExec("LConfig.exe -a", SW_SHOWNORMAL);
+		//  Launch(L"LConfig.exe -a");
 		//break;
 	case IDM_EXIT:
 		DestroyWindow(hwnd);
@@ -302,11 +285,11 @@ void TrayCommand(int flag)
 		{
 			if (isWindowsXP)
 			{
-				WinExec("sndvol32.exe -t", SW_SHOWNORMAL);
+				Launch(L"sndvol32.exe -t");
 			}
 			else
 			{
-				WinExec("sndvol.exe -f 49349574", SW_SHOWNORMAL);
+				Launch(L"sndvol.exe -f 49349574");
 			}
 			break;
 		}
@@ -314,11 +297,11 @@ void TrayCommand(int flag)
 		{
 			if (isWindowsXP)
 			{
-				WinExec(GetMixerCmdLine().c_str(), SW_SHOWNORMAL);
+				Launch(GetMixerCmdLine().c_str());
 			}
 			else
 			{
-				WinExec("sndvol.exe", SW_SHOWNORMAL);
+				Launch(L"sndvol.exe");
 			}
 			break;
 		}
@@ -326,7 +309,7 @@ void TrayCommand(int flag)
 		pVolume->SetMute(!pVolume->GetMute());
 		break;
 	case 4:
-		WinExec("LConfig.exe", SW_SHOWNORMAL);
+		Launch(L"LConfig.exe");
 		break;
 	}
 }
@@ -398,7 +381,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		LoadConfig();
 		LoadIcons();
-		pTrayIcon->Update(hIcons[iconIndex], "LouderIt");
+		pTrayIcon->Update(hIcons[iconIndex], L"LouderIt");
 	}
 
 	else if (message == WM_TASKBARCREATED)
@@ -472,7 +455,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			KillTimer(hWnd, 2);
 			//ShowBalloon(true, "", "");
-			pTrayIcon->ShowBaloon("", "");
+			pTrayIcon->ShowBaloon(L"", L"");
 		}
 		break;
 
@@ -492,16 +475,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			if (balloonHint)
 			{
-				string str_on = lexical_cast<string>(pVolume->GetVolume()) + "%";
+				wstring str_on = lexical_cast<wstring>(pVolume->GetVolume()) + L"%";
 				if (!pVolume->GetMute())
 				{
-					//ShowBalloon(true, lexical_cast<string>(pVolume->GetVolume()) + "%", "Громкость:");
-					pTrayIcon->ShowBaloon((lexical_cast<string>(pVolume->GetVolume()) + "%").c_str(), "Громкость:");
+					//ShowBalloon(true, lexical_cast<wstring>(pVolume->GetVolume()) + "%", "Громкость:");
+					pTrayIcon->ShowBaloon((lexical_cast<wstring>(pVolume->GetVolume()) + L"%").c_str(), L"Громкость:");
 				}
 				else
 				{
-					//ShowBalloon(true, lexical_cast<string>(pVolume->GetVolume()) + "% (Выкл.)", "Громкость:");
-					pTrayIcon->ShowBaloon((lexical_cast<string>(pVolume->GetVolume()) + "% (Выкл.)").c_str(), "Громкость:");
+					//ShowBalloon(true, lexical_cast<wstring>(pVolume->GetVolume()) + "% (Выкл.)", "Громкость:");
+					pTrayIcon->ShowBaloon((lexical_cast<wstring>(pVolume->GetVolume()) + L"% (Выкл.)").c_str(), L"Громкость:");
 				}
 				SetTimer(hWnd, 2, 3000, NULL);
 			}
@@ -568,13 +551,13 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 				if (!pVolume->GetMute())
 				{
 					//ShowBalloon(true, lexical_cast<string>(pVolume->GetVolume()) + "%", "Громкость:");
-					pTrayIcon->ShowBaloon((lexical_cast<string>(pVolume->GetVolume()) + "%").c_str(), "Громкость:");
+					pTrayIcon->ShowBaloon((lexical_cast<wstring>(pVolume->GetVolume()) + L"%").c_str(), L"Громкость:");
 
 				}
 				else
 				{
 					//ShowBalloon(true, lexical_cast<string>(pVolume->GetVolume()) + "% (Выкл.)", "Громкость:");
-					pTrayIcon->ShowBaloon((lexical_cast<string>(pVolume->GetVolume()) + "% (Выкл.)").c_str(), "Громкость:");
+					pTrayIcon->ShowBaloon((lexical_cast<wstring>(pVolume->GetVolume()) + L"% (Выкл.)").c_str(), L"Громкость:");
 				}
 				SetTimer(hwnd, 2, 3000, NULL);
 			}
@@ -593,7 +576,7 @@ void SetHook(BOOL flag)
 		hHook = SetWindowsHookEx(WH_MOUSE_LL, LowLevelMouseProc, hInst, 0);
 		if (hHook <= 0) 
 		{
-			MessageBox(hwnd, "SetWindowsHookEx", "Error!", MB_OK | MB_ICONERROR);
+			MessageBox(hwnd, L"SetWindowsHookEx", L"Error!", MB_OK | MB_ICONERROR);
 			DestroyWindow(hwnd);
 		}
 
@@ -608,7 +591,7 @@ void SetHook(BOOL flag)
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, 
 					 LPSTR lpCmdLine, int nShowCmd)
 {
-	CreateMutex(NULL, false, _T("louderit_mutex"));
+	CreateMutex(NULL, false, L"louderit_mutex");
 	if (GetLastError() == ERROR_ALREADY_EXISTS)
 		return 0;
 
@@ -627,10 +610,10 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	wc.hCursor			= 0;
 	wc.hbrBackground	= 0;
 	wc.lpszMenuName		= NULL;
-	wc.lpszClassName	= _T("LouderIt");
+	wc.lpszClassName	= L"LouderIt";
 
 	RegisterClass(&wc);
-	hwnd = CreateWindow(wc.lpszClassName, "", 0, 0, 0, 0, 0, 0, 0, hInstance, NULL);
+	hwnd = CreateWindow(wc.lpszClassName, L"", 0, 0, 0, 0, 0, 0, 0, hInstance, NULL);
 	if (!hwnd)
 	{
 		return 0;
@@ -638,16 +621,16 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	// -----------------------------------------------------------------------------
 	// Инициализация программы
 	// -----------------------------------------------------------------------------
-	WM_LOADCONFIG		= RegisterWindowMessage("WM_LOADCONFIG");
-	WM_TASKBARCREATED	= RegisterWindowMessage("TaskbarCreated");
+	WM_LOADCONFIG		= RegisterWindowMessage(L"WM_LOADCONFIG");
+	WM_TASKBARCREATED	= RegisterWindowMessage(L"TaskbarCreated");
 
 	if (isWindowsXP)
 	{
-		pVolume = new CVolumeMxImpl;
+		pVolume = new VolumeMxImpl;
 	}
 	else // Vista or Win7
 	{
-		pVolume = new CVolumeImpl;
+		pVolume = new VolumeImpl;
 	}
 	
 	SetHook(true); 
@@ -658,7 +641,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	LoadIcons();
 	
 	pTrayIcon = new TrayIcon(hwnd);
-	pTrayIcon->Set(hIcons[0], "LouderIt");
+	pTrayIcon->Set(hIcons[0], L"LouderIt");
 	UpdateTrayIcon();
 
 	// Обработка сообщений программы

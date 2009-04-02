@@ -16,7 +16,7 @@ TrayIcon::~TrayIcon()
 }
 
 //-----------------------------------------------------------------------------
-bool TrayIcon::Set(HICON hIcon, LPCTSTR szTip)
+bool TrayIcon::Set(HICON hIcon, const wchar_t* szTip)
 {
 	if (m_Setted)
 		return false;
@@ -29,13 +29,13 @@ bool TrayIcon::Set(HICON hIcon, LPCTSTR szTip)
     nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     nid.uCallbackMessage = WM_NOTIFYICONTRAY;
     nid.hIcon = hIcon;
-    lstrcpyn(nid.szTip, szTip, sizeof(nid.szTip));
+    _tcscpy_s(nid.szTip, szTip);
 		
-	return (m_Setted = Shell_NotifyIcon(NIM_ADD, &nid));
+	return m_Setted = Shell_NotifyIcon(NIM_ADD, &nid);
 }
 
 //-----------------------------------------------------------------------------
-bool TrayIcon::Update(HICON hIcon, LPCTSTR szTip)
+bool TrayIcon::Update(HICON hIcon, const wchar_t* szTip)
 {
 	
 	if (!m_Setted)
@@ -43,9 +43,9 @@ bool TrayIcon::Update(HICON hIcon, LPCTSTR szTip)
 	
 	nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
 	nid.hIcon = hIcon;
-	lstrcpyn(nid.szTip, szTip, sizeof(nid.szTip));
+	_tcscpy_s(nid.szTip, szTip);
 
-	return (m_Setted = Shell_NotifyIcon(NIM_MODIFY, &nid));
+	return m_Setted = Shell_NotifyIcon(NIM_MODIFY, &nid);
 }
 
 //-----------------------------------------------------------------------------
@@ -54,7 +54,7 @@ bool TrayIcon::Remove()
 	if (!m_Setted)
 		return false;	
 
-	return !(m_Setted = !Shell_NotifyIcon(NIM_DELETE, &nid));
+	return m_Setted = Shell_NotifyIcon(NIM_DELETE, &nid);
 }
 
 //-----------------------------------------------------------------------------
@@ -69,15 +69,15 @@ bool TrayIcon::Restore()
 }
 
 //-----------------------------------------------------------------------------
-bool TrayIcon::ShowBaloon(LPCTSTR szInfo, LPCTSTR szInfoTitle)
+bool TrayIcon::ShowBaloon(LPCTSTR szInfo, const wchar_t* szInfoTitle)
 {
 	if (!m_Setted)
 		return false;
 
 	nid.uFlags = NIF_INFO;
-	lstrcpyn(nid.szInfo, szInfo, sizeof(nid.szInfo));
+	_tcscpy_s(nid.szInfo, szInfo);
 	nid.uTimeout = 0;
-	lstrcpyn(nid.szInfoTitle, szInfoTitle, sizeof(nid.szInfoTitle));
+	_tcscpy_s(nid.szInfoTitle, szInfoTitle);
 
-	return (m_Setted = Shell_NotifyIcon(NIM_MODIFY, &nid));
+	return m_Setted = Shell_NotifyIcon(NIM_MODIFY, &nid);
 }

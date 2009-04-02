@@ -3,158 +3,155 @@
 #include "platform.h"
 
 //-----------------------------------------------------------------------------
-CVolumeImpl::CVolumeImpl() :
-			m_pEndpointVolume(NULL),
-			m_pDeviceEnumerator(NULL),
-			m_pDefaultDevice(NULL),
-			m_pCollection(NULL)
+VolumeImpl::VolumeImpl() :
+			end_point_volume_(NULL),
+			device_enumerator_(NULL),
+			default_device_(NULL),
+			collection_(NULL)
 {
 }
 
 //-----------------------------------------------------------------------------
-CVolumeImpl::~CVolumeImpl()
+VolumeImpl::~VolumeImpl()
 {
 }
 
 //-----------------------------------------------------------------------------
-bool CVolumeImpl::Init(int deviceNumber, HWND hwnd)
+bool VolumeImpl::Init(int device_number, HWND hwnd)
 {
 	CoInitialize(NULL);
 
-	m_hr = CoCreateGuid(&m_guidContext);
-	EXIT_ON_ERROR(m_hr);
+	hr_ = CoCreateGuid(&guid_context_);
+	EXIT_ON_ERROR(hr_);
 	
-	m_hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_INPROC_SERVER, __uuidof(IMMDeviceEnumerator), (LPVOID *)&m_pDeviceEnumerator);
-	EXIT_ON_ERROR(m_hr);
+	hr_ = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_INPROC_SERVER, __uuidof(IMMDeviceEnumerator), (LPVOID *)&device_enumerator_);
+	EXIT_ON_ERROR(hr_);
 	
-	m_hr = m_pDeviceEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &m_pDefaultDevice);
-	EXIT_ON_ERROR(m_hr);
+	hr_ = device_enumerator_->GetDefaultAudioEndpoint(eRender, eConsole, &default_device_);
+	EXIT_ON_ERROR(hr_);
 
-	//m_hr = m_pCollection->Item(deviceNumber, &m_pDefaultDevice);
-	//EXIT_ON_ERROR(m_hr);
+	//hr_ = collection_->Item(deviceNumber, &default_device_);
+	//EXIT_ON_ERROR(hr_);
 	
-	m_hr = m_pDefaultDevice->Activate(__uuidof(IAudioEndpointVolume), CLSCTX_INPROC_SERVER, NULL, (LPVOID *)&m_pEndpointVolume);
-	EXIT_ON_ERROR(m_hr);
+	hr_ = default_device_->Activate(__uuidof(IAudioEndpointVolume), CLSCTX_INPROC_SERVER, NULL, (LPVOID *)&end_point_volume_);
+	EXIT_ON_ERROR(hr_);
 
-	SAFE_RELEASE(m_pDefaultDevice);
+	SAFE_RELEASE(default_device_);
 
-	m_hr = m_pEndpointVolume->RegisterControlChangeNotify(
-		(IAudioEndpointVolumeCallback*)&m_EPVolEvents);
+	hr_ = end_point_volume_->RegisterControlChangeNotify(
+		(IAudioEndpointVolumeCallback*)&volume_events_);
 
 	return true;
 }
 
 //-----------------------------------------------------------------------------
-void CVolumeImpl::Shutdown()
+void VolumeImpl::Shutdown()
 {
-	SAFE_RELEASE(m_pDeviceEnumerator);
+	SAFE_RELEASE(device_enumerator_);
 
-	m_pEndpointVolume->UnregisterControlChangeNotify(
-		(IAudioEndpointVolumeCallback*)&m_EPVolEvents);
+	end_point_volume_->UnregisterControlChangeNotify(
+		(IAudioEndpointVolumeCallback*)&volume_events_);
 
-	m_pEndpointVolume->Release();
+	end_point_volume_->Release();
 
 	CoUninitialize();
 }
 
 //-----------------------------------------------------------------------------
-void CVolumeImpl::SetVolume(int percent)
+void VolumeImpl::SetVolume(int percent)
 {
-	float  volume;
-	volume = (float)percent / MAX_VOL;
+	float volume = (float)percent / MAX_VOL;
 
-	m_hr = m_pEndpointVolume->SetMasterVolumeLevelScalar(volume, &m_guidContext);
-	EXIT_ON_ERROR(m_hr);
+	hr_ = end_point_volume_->SetMasterVolumeLevelScalar(volume, &guid_context_);
+	EXIT_ON_ERROR(hr_);
 }
 //-----------------------------------------------------------------------------
-void CVolumeImpl::SetMute(bool mute)
+void VolumeImpl::SetMute(bool mute)
 {
-	m_pEndpointVolume->SetMute(mute, &m_guidContext);
+	end_point_volume_->SetMute(mute, &guid_context_);
 }
 
 //-----------------------------------------------------------------------------
-int CVolumeImpl::GetVolume()
+int VolumeImpl::GetVolume() const
 {
 	float	volume;
-	int		percent;
 
-	m_hr = m_pEndpointVolume->GetMasterVolumeLevelScalar(&volume);
-	EXIT_ON_ERROR(m_hr);
-	percent = (int)(MAX_VOL * volume + 0.5f);
+	hr_ = end_point_volume_->GetMasterVolumeLevelScalar(&volume);
+	EXIT_ON_ERROR(hr_);
 
+	int percent = (int)(MAX_VOL * volume + 0.5f);
 	return 	percent;
 }
 
 //-----------------------------------------------------------------------------
-bool CVolumeImpl::GetMute()
+bool VolumeImpl::GetMute() const
 {
 	BOOL mute;
 
-	m_hr = m_pEndpointVolume->GetMute(&mute);
-	EXIT_ON_ERROR(m_hr);
+	hr_ = end_point_volume_->GetMute(&mute);
+	EXIT_ON_ERROR(hr_);
 
 	return mute != 0 ? true : false;
 }
 
 //-----------------------------------------------------------------------------
-void CVolumeImpl::SetVolumeChannel(int leftChannelVol, int rightChannelVol)
+void VolumeImpl::SetVolumeChannel(int l_channel_volume, int r_channel_volume)
 {
-	float  volume;
-	volume = (float)leftChannelVol / MAX_VOL;
-	m_hr = m_pEndpointVolume->SetChannelVolumeLevelScalar(LEFT, volume, &m_guidContext);
-	EXIT_ON_ERROR(m_hr);
+	float volume = (float)l_channel_volume / MAX_VOL;
+	hr_ = end_point_volume_->SetChannelVolumeLevelScalar(LEFT, volume, &guid_context_);
+	EXIT_ON_ERROR(hr_);
 
-	volume = (float)rightChannelVol / MAX_VOL;
-	m_hr = m_pEndpointVolume->SetChannelVolumeLevelScalar(RIGHT, volume, &m_guidContext);
-	EXIT_ON_ERROR(m_hr);
+	volume = (float)r_channel_volume / MAX_VOL;
+	hr_ = end_point_volume_->SetChannelVolumeLevelScalar(RIGHT, volume, &guid_context_);
+	EXIT_ON_ERROR(hr_);
 }
 
 //-----------------------------------------------------------------------------
-int CVolumeImpl::GetNumDevice()
+int VolumeImpl::GetNumDevice() const
 {
 	CoInitialize(NULL);
 
-	m_hr = CoCreateGuid(&m_guidContext);
-	EXIT_ON_ERROR(m_hr);
+	hr_ = CoCreateGuid(const_cast<GUID *>(&guid_context_));
+	EXIT_ON_ERROR(hr_);
 
-	m_hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_INPROC_SERVER, __uuidof(IMMDeviceEnumerator), (LPVOID *)&m_pDeviceEnumerator);
-	EXIT_ON_ERROR(m_hr);
+	hr_ = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_INPROC_SERVER, __uuidof(IMMDeviceEnumerator), (LPVOID *)&device_enumerator_);
+	EXIT_ON_ERROR(hr_);
 
-	m_hr = m_pDeviceEnumerator->EnumAudioEndpoints(
+	hr_ = device_enumerator_->EnumAudioEndpoints(
 		eAll, DEVICE_STATE_ACTIVE,
-		&m_pCollection);
-	EXIT_ON_ERROR(m_hr)
+		const_cast<IMMDeviceCollection **>(&collection_));
+	EXIT_ON_ERROR(hr_)
 
 	UINT  count;
-	m_hr = m_pCollection->GetCount(&count);
-	EXIT_ON_ERROR(m_hr)
+	hr_ = collection_->GetCount(&count);
+	EXIT_ON_ERROR(hr_)
 
 	return count;
 }
 
 //-----------------------------------------------------------------------------
-string CVolumeImpl::GetDevName(const int index)
+wstring VolumeImpl::GetDeviceName(const int index) const
 {
-	string		s;
 	IMMDevice		*pEndpoint = NULL;
 	IPropertyStore	*pProps = NULL;
 
 	// Get pointer to endpoint number i.
-	m_hr = m_pCollection->Item(index, &pEndpoint);
-	EXIT_ON_ERROR(m_hr)
+	hr_ = collection_->Item(index, &pEndpoint);
+	EXIT_ON_ERROR(hr_)
 
-	m_hr = pEndpoint->OpenPropertyStore(STGM_READ, &pProps);
-	EXIT_ON_ERROR(m_hr)
+	hr_ = pEndpoint->OpenPropertyStore(STGM_READ, &pProps);
+	EXIT_ON_ERROR(hr_)
 
 	PROPVARIANT varName;
 	// Initialize container for property value.
 	PropVariantInit(&varName);
 
 	// Get the endpoint's friendly-name property.
-	m_hr = pProps->GetValue(PKEY_Device_FriendlyName, &varName);
-	EXIT_ON_ERROR(m_hr)
+	hr_ = pProps->GetValue(PKEY_Device_FriendlyName, &varName);
+	EXIT_ON_ERROR(hr_)
 
-	s = WideToAnsi(varName.pwszVal);
+	//s = WideToAnsi(varName.pwszVal);
+	wstring s = varName.pwszVal;
 
 	PropVariantClear(&varName);
 	SAFE_RELEASE(pProps)

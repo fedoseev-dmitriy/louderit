@@ -2,28 +2,29 @@
 #include "volume_mx_impl.h"
 
 //-----------------------------------------------------------------------------
-CVolumeMxImpl::CVolumeMxImpl() :
-				m_channelCount(0)
+VolumeMxImpl::VolumeMxImpl() :
+				channel_count_(0),
+				hmx_(NULL)
 {
 
 }
 
 //-----------------------------------------------------------------------------
-CVolumeMxImpl::~CVolumeMxImpl()
+VolumeMxImpl::~VolumeMxImpl()
 {
 
 }
 
 //-----------------------------------------------------------------------------
-bool CVolumeMxImpl::Init(int deviceNumber, HWND hwnd)
+bool VolumeMxImpl::Init(int deviceNumber, HWND hwnd)
 {
-	m_hmx = NULL;
+	hmx_ = NULL;
 
-	m_Res = mixerOpen(&m_hmx, deviceNumber, DWORD(hwnd), 0, CALLBACK_WINDOW);
+	mm_result_ = mixerOpen(&hmx_, deviceNumber, DWORD(hwnd), 0, CALLBACK_WINDOW);
 
-	if (m_Res != MMSYSERR_NOERROR)
+	if (mm_result_ != MMSYSERR_NOERROR)
 	{
-		TraceA("%s", "Невозможно открыть микшер");
+		//TraceA("%s", "Невозможно открыть микшер");
 		return FALSE;
 	}
 	do 
@@ -31,67 +32,67 @@ bool CVolumeMxImpl::Init(int deviceNumber, HWND hwnd)
 		//
 		// Запрашиваем параметры линии по типу
 		//
-		m_mxLine.cbStruct = sizeof(m_mxLine);
+		mx_line_.cbStruct = sizeof(mx_line_);
 
-		m_mxLine.dwComponentType = MIXERLINE_COMPONENTTYPE_DST_SPEAKERS;
+		mx_line_.dwComponentType = MIXERLINE_COMPONENTTYPE_DST_SPEAKERS;
 
-		m_Res = mixerGetLineInfo(HMIXEROBJ(m_hmx),&m_mxLine,MIXER_GETLINEINFOF_COMPONENTTYPE);
+		mm_result_ = mixerGetLineInfo(HMIXEROBJ(hmx_),&mx_line_,MIXER_GETLINEINFOF_COMPONENTTYPE);
 
-		if (m_Res != MMSYSERR_NOERROR) 
+		if (mm_result_ != MMSYSERR_NOERROR) 
 		{
-			TraceA("%s", "Невозможно получить параметры линии");
+			//TraceA("%s", "Невозможно получить параметры линии");
 			break;
 		}
-		m_channelCount = m_mxLine.cChannels;
-		TraceA("m_channelCount = %i", m_channelCount);
+		channel_count_ = mx_line_.cChannels;
+		//TraceA("channel_count_ = %i", channel_count_);
 		//
 		// Запрашиваем параметры регулятора громкости (тип элемента - VOLUME)
 		//
-		m_mxCtls.cbStruct = sizeof(m_mxCtls);
-		m_mxCtls.dwLineID = m_mxLine.dwLineID;
-		m_mxCtls.dwControlType = MIXERCONTROL_CONTROLTYPE_VOLUME;
-		m_mxCtls.cControls = 1;
-		m_mxCtls.cbmxctrl = sizeof(m_mxVolCtrl);
-		m_mxCtls.pamxctrl = &m_mxVolCtrl;
+		mx_ctls_.cbStruct = sizeof(mx_ctls_);
+		mx_ctls_.dwLineID = mx_line_.dwLineID;
+		mx_ctls_.dwControlType = MIXERCONTROL_CONTROLTYPE_VOLUME;
+		mx_ctls_.cControls = 1;
+		mx_ctls_.cbmxctrl = sizeof(mx_vol_ctrl_);
+		mx_ctls_.pamxctrl = &mx_vol_ctrl_;
 
-		m_Res = mixerGetLineControls(HMIXEROBJ(m_hmx),&m_mxCtls,MIXER_GETLINECONTROLSF_ONEBYTYPE);
+		mm_result_ = mixerGetLineControls(HMIXEROBJ(hmx_),&mx_ctls_,MIXER_GETLINECONTROLSF_ONEBYTYPE);
 
-		if (m_Res != MMSYSERR_NOERROR) 
+		if (mm_result_ != MMSYSERR_NOERROR) 
 		{
-			TraceA("%s", "Невозможно получить параметры регулятора громкости");
+			//TraceA("%s", "Невозможно получить параметры регулятора громкости");
 			break;
 		}  
 		//
 		// Запрашиваем параметры переключателя глушения (тип элемента - MUTE)
 		//
-		m_mxCtls.dwControlType = MIXERCONTROL_CONTROLTYPE_MUTE;
-		m_mxCtls.cControls = 1;
-		m_mxCtls.cbmxctrl = sizeof(m_mxMuteCtrl);
-		m_mxCtls.pamxctrl = &m_mxMuteCtrl;
+		mx_ctls_.dwControlType = MIXERCONTROL_CONTROLTYPE_MUTE;
+		mx_ctls_.cControls = 1;
+		mx_ctls_.cbmxctrl = sizeof(mx_mute_ctrl_);
+		mx_ctls_.pamxctrl = &mx_mute_ctrl_;
 
-		m_Res = mixerGetLineControls(HMIXEROBJ(m_hmx),&m_mxCtls,MIXER_GETLINECONTROLSF_ONEBYTYPE);
+		mm_result_ = mixerGetLineControls(HMIXEROBJ(hmx_),&mx_ctls_,MIXER_GETLINECONTROLSF_ONEBYTYPE);
 
-		if (m_Res != MMSYSERR_NOERROR) 
+		if (mm_result_ != MMSYSERR_NOERROR) 
 		{
-			TraceA("%s", "Невозможно получить параметры переключателя глушения");
+			//TraceA("%s", "Невозможно получить параметры переключателя глушения");
 			break;
 		}  
 		//
 		// Инициализируем описатели состояния элементов
 		//
-		m_mxVolDetails.cbStruct = sizeof(m_mxVolDetails);
-		m_mxVolDetails.dwControlID = m_mxVolCtrl.dwControlID;
-		m_mxVolDetails.cChannels = 1;
-		m_mxVolDetails.cMultipleItems = 0;
-		m_mxVolDetails.cbDetails = sizeof(m_mxVolVal);
-		m_mxVolDetails.paDetails = &m_mxVolVal;
+		mx_vol_details_.cbStruct = sizeof(mx_vol_details_);
+		mx_vol_details_.dwControlID = mx_vol_ctrl_.dwControlID;
+		mx_vol_details_.cChannels = 1;
+		mx_vol_details_.cMultipleItems = 0;
+		mx_vol_details_.cbDetails = sizeof(mx_vol_value_);
+		mx_vol_details_.paDetails = &mx_vol_value_;
 
-		m_mxMuteDetails.cbStruct = sizeof(m_mxMuteDetails);
-		m_mxMuteDetails.dwControlID = m_mxMuteCtrl.dwControlID;
-		m_mxMuteDetails.cChannels = 1;
-		m_mxMuteDetails.cMultipleItems = 0;
-		m_mxMuteDetails.cbDetails = sizeof(m_mxMuteVal);
-		m_mxMuteDetails.paDetails = &m_mxMuteVal;
+		mx_mute_details_.cbStruct = sizeof(mx_mute_details_);
+		mx_mute_details_.dwControlID = mx_mute_ctrl_.dwControlID;
+		mx_mute_details_.cChannels = 1;
+		mx_mute_details_.cMultipleItems = 0;
+		mx_mute_details_.cbDetails = sizeof(mx_mute_status_);
+		mx_mute_details_.paDetails = &mx_mute_status_;
 
 		return true;
 
@@ -104,70 +105,71 @@ bool CVolumeMxImpl::Init(int deviceNumber, HWND hwnd)
 }
 
 //-----------------------------------------------------------------------------
-void CVolumeMxImpl::Shutdown()
+void VolumeMxImpl::Shutdown()
 {
-	if (m_hmx)
+	if (hmx_)
 	{
-		mixerClose(m_hmx);
-		m_hmx = 0;
+		mixerClose(hmx_);
+		hmx_ = 0;
 	}
 }
 
 //-----------------------------------------------------------------------------
-void CVolumeMxImpl::SetVolume(int percent)
+void VolumeMxImpl::SetVolume(int percent)
 {
-	m_mxVolVal.dwValue = (MAX_VOL_XP / 100) * percent;
-	mixerSetControlDetails(HMIXEROBJ(m_hmx), &m_mxVolDetails, MIXER_GETCONTROLDETAILSF_VALUE);
+	mx_vol_value_.dwValue = (MAX_VOL_XP / 100) * percent;
+	mixerSetControlDetails(HMIXEROBJ(hmx_), &mx_vol_details_, MIXER_GETCONTROLDETAILSF_VALUE);
 }
 
 //-----------------------------------------------------------------------------
-int CVolumeMxImpl::GetVolume()
+int VolumeMxImpl::GetVolume() const
 {
-	int percent;
-	mixerGetControlDetails(HMIXEROBJ(m_hmx), &m_mxVolDetails, MIXER_GETCONTROLDETAILSF_VALUE);
-	percent = m_mxVolVal.dwValue / (MAX_VOL_XP / 100);
+	mixerGetControlDetails(HMIXEROBJ(hmx_), 
+		const_cast<LPMIXERCONTROLDETAILS>(&mx_vol_details_), MIXER_GETCONTROLDETAILSF_VALUE);
+	int percent = mx_vol_value_.dwValue / (MAX_VOL_XP / 100);
 	return percent;
 }
 
 //-----------------------------------------------------------------------------
-void CVolumeMxImpl::SetMute(bool mute)
+void VolumeMxImpl::SetMute(bool mute)
 {
-	m_mxMuteVal.fValue = mute;
-	mixerSetControlDetails(HMIXEROBJ(m_hmx), &m_mxMuteDetails, MIXER_GETCONTROLDETAILSF_VALUE);
+	mx_mute_status_.fValue = mute;
+	mixerSetControlDetails(HMIXEROBJ(hmx_), &mx_mute_details_, MIXER_GETCONTROLDETAILSF_VALUE);
 }
 
 //-----------------------------------------------------------------------------
-bool CVolumeMxImpl::GetMute()
+bool VolumeMxImpl::GetMute() const
 {
-	mixerGetControlDetails(HMIXEROBJ(m_hmx), &m_mxMuteDetails, MIXER_GETCONTROLDETAILSF_VALUE);
-	return m_mxMuteVal.fValue ? true : false;
+	mixerGetControlDetails(HMIXEROBJ(hmx_), 
+		const_cast<LPMIXERCONTROLDETAILS>(&mx_mute_details_), MIXER_GETCONTROLDETAILSF_VALUE);
+	return mx_mute_status_.fValue ? true : false;
 }
 
 //-----------------------------------------------------------------------------
-void CVolumeMxImpl::SetVolumeChannel(int LVolume, int RVolume)
+void VolumeMxImpl::SetVolumeChannel(int l_channel_volume, int r_channel_volume)
 {
 
-	MessageBox(0, "Данная функция пока не реализована для Windows XP, установите баланс 50",
-		"Error!", MB_ICONERROR);
+	MessageBox(0, L"Данная функция пока не реализована для Windows XP, установите баланс 50",
+		L"Error!", MB_ICONERROR);
 }
 
 //-----------------------------------------------------------------------------
-int CVolumeMxImpl::GetNumDevice()
+int VolumeMxImpl::GetNumDevice() const
 {
 	return mixerGetNumDevs();
 }
 
 //-----------------------------------------------------------------------------
-string CVolumeMxImpl::GetDevName(const int index)
+wstring VolumeMxImpl::GetDeviceName(const int index) const
 {
 	MIXERCAPS Caps;
 
 	mixerGetDevCaps(index, &Caps, sizeof(Caps));
-	return (const char *)Caps.szPname;
+	return (const wchar_t *)Caps.szPname;
 }
 
 //-----------------------------------------------------------------------------
-//bool CVolumeMxImpl::CheckIdDevice(int idDevice)
+//bool VolumeMxImpl::CheckIdDevice(int idDevice)
 //{
 //	if (nIdDevice == mxVolCtrl.dwControlID  || nIdDevice == mxMuteCtrl.dwControlID)
 //	{
