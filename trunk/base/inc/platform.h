@@ -5,4 +5,4 @@
 { (punk)->Release(); (punk) = NULL; }
 
 #define EXIT_ON_ERROR(hres)  \
-	if (FAILED(hres)) { OutputDebugString("ERROR"); }
+	if (FAILED(hres)) { MessageBox(0, L"ERROR", L"ERROR", 0); }

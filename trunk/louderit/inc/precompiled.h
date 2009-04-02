@@ -36,7 +36,5 @@
 #pragma comment(lib, "Winmm.lib")
 //#pragma comment(lib, "lhook.lib")
 
-#include "Trace.h"
-
 using namespace std;
 

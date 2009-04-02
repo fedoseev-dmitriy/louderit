@@ -11,30 +11,28 @@
 // endpoint device, the change initiates a call to the
 // client's IAudioEndpointVolumeCallback::OnNotify method.
 //-----------------------------------------------------------
-class CVolumeNotification : public IAudioEndpointVolumeCallback
+class VolumeNotification : public IAudioEndpointVolumeCallback
 {
-	LONG  _cRef;
+	LONG  cRef_;
 
 public:
-	CVolumeNotification() :
-	  _cRef(1)
+	VolumeNotification() :
+	  cRef_(1)
 	  {
 	  }
 
-	  ~CVolumeNotification()
+	  ~VolumeNotification()
 	  {
 	  }
-
-	  // IUnknown methods -- AddRef, Release, and QueryInterface
 
 	  ULONG STDMETHODCALLTYPE AddRef()
 	  {
-		  return InterlockedIncrement(&_cRef);
+		  return InterlockedIncrement(&cRef_);
 	  }
 
 	  ULONG STDMETHODCALLTYPE Release()
 	  {
-		  ULONG ulRef = InterlockedDecrement(&_cRef);
+		  ULONG ulRef = InterlockedDecrement(&cRef_);
 		  if (0 == ulRef)
 		  {
 			  delete this;
@@ -63,8 +61,6 @@ public:
 		  return S_OK;
 	  }
 
-	  // Callback method for endpoint-volume-change notifications.
-
 	  HRESULT STDMETHODCALLTYPE OnNotify(PAUDIO_VOLUME_NOTIFICATION_DATA  pNotify)
 	  {
 		  if (pNotify == NULL)
@@ -76,39 +72,36 @@ public:
 	  }
 };
 //////////////////////////////////////////////////////////////////////////
-class CVolumeImpl : public IVolume
+class VolumeImpl: public IVolume
 {
 public:
-						CVolumeImpl();
-	virtual				~CVolumeImpl();
+						VolumeImpl();
+	virtual				~VolumeImpl();
 
-	bool				Init(int deviceNumber, HWND hwnd);
+	bool				Init(int device_number, HWND hwnd);
 	void				Shutdown();
 
 	void				SetVolume(int percent);
-
-	int					GetVolume();
+	int					GetVolume() const;
 
 	void				SetMute(bool mute);
-	bool				GetMute();
+	bool				GetMute() const;
 
-	void				SetVolumeChannel(int leftChannelVol, int rightChannelVol);
-	int					GetNumDevice();
-	string			GetDevName(const int index);
+	int					GetNumDevice() const;
+	wstring				GetDeviceName(const int index) const;
 
+	void				SetVolumeChannel(int l_channel_volume, int r_channel_volume);
 	//bool				CheckIdDevice(int idDevice);
 private:
+	mutable HRESULT				hr_;
 
+	IAudioEndpointVolume		*end_point_volume_;
+	IMMDeviceEnumerator			*device_enumerator_;
+	IMMDevice					*default_device_;
+	IMMDeviceCollection			*collection_;
 
-	HRESULT						m_hr;
-
-	IAudioEndpointVolume		*m_pEndpointVolume;
-	IMMDeviceEnumerator			*m_pDeviceEnumerator;
-	IMMDevice					*m_pDefaultDevice;
-	IMMDeviceCollection			*m_pCollection;
-
-	CVolumeNotification			m_EPVolEvents;
-	GUID						m_guidContext;
+	VolumeNotification			volume_events_;
+	GUID						guid_context_;
 
 	enum Channel
 	{
@@ -116,23 +109,3 @@ private:
 		RIGHT
 	};
 };
-
-template <typename _anystr> string WideToAnsi(const _anystr src, DWORD codepage=CP_ACP)
-{
-	wstring s = src;
-	string res;
-	PCHAR buf;
-	size_t l, j;
-
-	l = s.length();
-	if (!l) return "";
-
-	j = (size_t)WideCharToMultiByte(codepage, 0, &s[0], (int)l, NULL, 0, NULL, NULL)+1;
-	buf = new CHAR[j];
-	WideCharToMultiByte(codepage, 0, &s[0], (int)l, buf, (int)j, NULL, NULL);	
-	buf[j-1] = '\0';
-	res = buf;
-	delete[] buf;
-
-	return res;
-}
