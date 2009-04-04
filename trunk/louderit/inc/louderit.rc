@@ -55,6 +55,7 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_ICON1               ICON                    "..\\res\\Icon_app.ico"
+IDI_ICON2               ICON                    "D:\\LouderIt\\trunc\\louderit\\res\\Icon_conf.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
