@@ -45,8 +45,6 @@ int						volumeLevel = 0;
 int 					numIcons = 0;
 
 // Для различия двойного и одиночного клика
-bool					isClickStart = false;
-bool					isClickReady = false;
 bool					isDblClick = false;
 
 int						hotKey = 0;
@@ -195,9 +193,19 @@ void LoadIcons()
 	//get number of icons contained in the skin 
 	numIcons = ExtractIconEx(path, -1, NULL, NULL, 0);
 
-	for (int i = 0; i < numIcons; ++i)
+	if (numIcons > 0)
 	{
-		hIcons.push_back(ExtractIcon(hInst, path, i));
+		for (int i = 0; i < numIcons; ++i)
+		{
+			hIcons.push_back(ExtractIcon(hInst, path, i));
+		}
+	}
+	else
+	{
+		// FIXME!
+		numIcons = 2;
+		hIcons.push_back(LoadIcon(NULL, IDI_WARNING));
+		hIcons.push_back(LoadIcon(NULL, IDI_WARNING));
 	}
 }
 
@@ -403,23 +411,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			switch (lParam)
 			{
+
 			case WM_LBUTTONDOWN:
 				SetTimer(hWnd, 1, GetDoubleClickTime(), NULL);
-				isClickStart = true;
-				break;
-
-			case WM_LBUTTONUP:
-				if (isClickStart)
-				{
-					isClickReady = true;
-					isClickStart = false;
-				}
 				break;
 
 			case WM_LBUTTONDBLCLK:
-				TrayCommand(trayCommands[1]);
-				isClickReady = false;
 				isDblClick = true;
+				TrayCommand(trayCommands[1]);
 				break;
 
 			case WM_MBUTTONUP:
@@ -443,18 +442,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			KillTimer(hWnd, 1);
 			if (!isDblClick)
 			{
-				if (isClickReady)
-				{
-					isClickReady = false;
-					TrayCommand(trayCommands[0]);
-				}
+				TrayCommand(trayCommands[0]);
 			}
-			isDblClick = false;
+			else
+			{
+				isDblClick = false;
+			}
 		}
 		if (wParam == 2)
 		{
 			KillTimer(hWnd, 2);
-			//ShowBalloon(true, "", "");
 			pTrayIcon->ShowBaloon(L"", L"");
 		}
 		break;
@@ -478,12 +475,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				wstring str_on = lexical_cast<wstring>(pVolume->GetVolume()) + L"%";
 				if (!pVolume->GetMute())
 				{
-					//ShowBalloon(true, lexical_cast<wstring>(pVolume->GetVolume()) + "%", "Громкость:");
 					pTrayIcon->ShowBaloon((lexical_cast<wstring>(pVolume->GetVolume()) + L"%").c_str(), L"Громкость:");
 				}
 				else
 				{
-					//ShowBalloon(true, lexical_cast<wstring>(pVolume->GetVolume()) + "% (Выкл.)", "Громкость:");
 					pTrayIcon->ShowBaloon((lexical_cast<wstring>(pVolume->GetVolume()) + L"% (Выкл.)").c_str(), L"Громкость:");
 				}
 				SetTimer(hWnd, 2, 3000, NULL);
@@ -550,13 +545,11 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 			{
 				if (!pVolume->GetMute())
 				{
-					//ShowBalloon(true, lexical_cast<string>(pVolume->GetVolume()) + "%", "Громкость:");
 					pTrayIcon->ShowBaloon((lexical_cast<wstring>(pVolume->GetVolume()) + L"%").c_str(), L"Громкость:");
 
 				}
 				else
 				{
-					//ShowBalloon(true, lexical_cast<string>(pVolume->GetVolume()) + "% (Выкл.)", "Громкость:");
 					pTrayIcon->ShowBaloon((lexical_cast<wstring>(pVolume->GetVolume()) + L"% (Выкл.)").c_str(), L"Громкость:");
 				}
 				SetTimer(hwnd, 2, 3000, NULL);
