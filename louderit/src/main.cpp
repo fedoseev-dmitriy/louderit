@@ -71,19 +71,17 @@ wchar_t						device_name[256] = {0};
 wchar_t						skin[256] = {0};
 
 //-----------------------------------------------------------------------------
-bool Launch(const wchar_t* command_line)
+bool Launch(HWND hwnd, const wchar_t* command_line, const wchar_t* parameters = NULL,
+			unsigned int cmd_show = SW_SHOWNORMAL)
 {
-	STARTUPINFO	si = {sizeof(si)};
-	PROCESS_INFORMATION	pi;
+	HINSTANCE instance = ShellExecute(hwnd, NULL/*operation*/, 
+		command_line, parameters, NULL/*dir*/, cmd_show);
 
-	if ( CreateProcess(NULL, const_cast<wchar_t*>(command_line), NULL, NULL, FALSE,
-		0, NULL, NULL, &si, &pi))
+	if ((int)instance <= 32)
 	{
-		CloseHandle(pi.hProcess);
-		CloseHandle(pi.hThread);
-		return true;
+		return false;
 	}
-	return false;
+	return true;
 }
 //------------------------------------------------------------------------------
 // Return true - XP, return false - Vista or later
@@ -204,8 +202,8 @@ void LoadIcons()
 	{
 		// FIXME!
 		numIcons = 2;
-		hIcons.push_back(LoadIcon(NULL, IDI_WARNING));
-		hIcons.push_back(LoadIcon(NULL, IDI_WARNING));
+		hIcons.push_back(LoadIcon(NULL, IDI_ERROR));
+		hIcons.push_back(LoadIcon(NULL, IDI_ERROR));
 	}
 }
 
@@ -226,7 +224,7 @@ void UpdateTrayIcon()
 //-----------------------------------------------------------------------------
 wstring GetMixerCmdLine()
 {
-	wstring str = L"sndvol32.exe -d " + lexical_cast<wstring>(deviceNumber);
+	wstring str = L"-d " + lexical_cast<wstring>(deviceNumber);
 	return str;
 }
 
@@ -260,19 +258,19 @@ void ProcessPopupMenu()
 		{
 			if (isWindowsXP)
 			{
-				Launch(GetMixerCmdLine().c_str());
+				Launch(hwnd, L"sndvol32.exe", GetMixerCmdLine().c_str());
 			}
 			else
 			{
-				Launch(L"sndvol.exe");
+				Launch(hwnd, L"sndvol.exe");
 			}
 			break;
 		}
 	case IDM_SETTING_AUDIO_PARAMETR:
-		Launch(L"rundll32.exe shell32.dll,Control_RunDLL mmsys.cpl");
+		Launch(hwnd, L"rundll32.exe", L"shell32.dll,Control_RunDLL mmsys.cpl");
 		break;
 	case IDM_SETTING_PROGRAM:
-		Launch(L"LConfig.exe");
+		Launch(hwnd, L"LConfig.exe");
 		break;
 		//case IDM_ABOUT:
 		//  Launch(L"LConfig.exe -a");
@@ -293,11 +291,11 @@ void TrayCommand(int flag)
 		{
 			if (isWindowsXP)
 			{
-				Launch(L"sndvol32.exe -t");
+				Launch(hwnd, L"sndvol32.exe", L"-t");
 			}
 			else
 			{
-				Launch(L"sndvol.exe -f 49349574");
+				Launch(hwnd, L"sndvol.exe", L"-f 49349574");
 			}
 			break;
 		}
@@ -305,11 +303,11 @@ void TrayCommand(int flag)
 		{
 			if (isWindowsXP)
 			{
-				Launch(GetMixerCmdLine().c_str());
+				Launch(hwnd, L"sndvol32.exe", GetMixerCmdLine().c_str());
 			}
 			else
 			{
-				Launch(L"sndvol.exe");
+				Launch(hwnd, L"sndvol.exe");
 			}
 			break;
 		}
@@ -317,7 +315,7 @@ void TrayCommand(int flag)
 		pVolume->SetMute(!pVolume->GetMute());
 		break;
 	case 4:
-		Launch(L"LConfig.exe");
+		Launch(hwnd, L"LConfig.exe");
 		break;
 	}
 }
@@ -634,7 +632,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	LoadIcons();
 	
 	pTrayIcon = new TrayIcon(hwnd);
-	pTrayIcon->Set(hIcons[0], L"LouderIt");
+	pTrayIcon->Add(hIcons[0], L"LouderIt");
 	UpdateTrayIcon();
 
 	// Обработка сообщений программы
