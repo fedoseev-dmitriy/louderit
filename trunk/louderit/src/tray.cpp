@@ -16,7 +16,7 @@ TrayIcon::~TrayIcon()
 }
 
 //-----------------------------------------------------------------------------
-bool TrayIcon::Set(HICON hIcon, const wchar_t* szTip)
+bool TrayIcon::Add( HICON hIcon, LPCTSTR szTip )
 {
 	if (m_Setted)
 		return false;
@@ -65,7 +65,7 @@ bool TrayIcon::Restore()
 
 	m_Setted = false;
 
-	return Set(nid.hIcon, nid.szTip);
+	return Add(nid.hIcon, nid.szTip);
 }
 
 //-----------------------------------------------------------------------------
