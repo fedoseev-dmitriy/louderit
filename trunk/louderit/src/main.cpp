@@ -128,7 +128,14 @@ BOOL SetHotKey(const wstring& SKey, const wstring& SMod, int NumKey)
 //------------------------------------------------------------------------------
 void LoadConfig()
 {
-	GetCurrentDirectory(MAX_PATH, config_file);
+	wchar_t			full_path[MAX_PATH] = {0};
+	LPTSTR			part_path;
+	
+	GetModuleFileName(NULL, config_file, MAX_PATH);
+	GetFullPathName(config_file, MAX_PATH, full_path, &part_path);
+	*part_path='\0';
+	_tcscpy_s(config_file, full_path);
+	
 	_tcscat_s(config_file, L"\\lconfig.ini");
 
 	// [General]
@@ -180,11 +187,18 @@ void LoadConfig()
 //------------------------------------------------------------------------------
 // Загрузка иконок
 //------------------------------------------------------------------------------
+
 void LoadIcons()
 {
 	wchar_t			path[MAX_PATH] = {0};
-
-	GetCurrentDirectory(MAX_PATH, path);
+    wchar_t			full_path[MAX_PATH] = {0};
+	LPTSTR			part_path;
+	
+	GetModuleFileName(NULL, path, MAX_PATH);
+	GetFullPathName(path, MAX_PATH, full_path, &part_path);
+	*part_path='\0';
+	_tcscpy_s(path, full_path);
+			
 	_tcscat_s(path, L"\\skins\\");
 	_tcscat_s(path, skin);
 
