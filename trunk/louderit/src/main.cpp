@@ -123,19 +123,29 @@ BOOL SetHotKey(const wstring& SKey, const wstring& SMod, int NumKey)
 	return false;
 }
 
+// get application directory
+bool GetAppPath(wchar_t* app_path)
+{
+	wchar_t		path_buff[MAX_PATH] = {0};
+	wchar_t*	path_name = 0;
+		
+	if ((!GetModuleFileName(NULL, path_buff, MAX_PATH)) ||
+		(!GetFullPathName(path_buff, MAX_PATH, app_path, &path_name)))
+	{
+		*app_path = '\0';
+		return false;
+	}
+
+	*path_name = '\0';
+	return true;
+}
+
 //------------------------------------------------------------------------------
 // Загрузка настроек
 //------------------------------------------------------------------------------
 void LoadConfig()
 {
-	wchar_t			full_path[MAX_PATH] = {0};
-	LPTSTR			part_path;
-	
-	GetModuleFileName(NULL, config_file, MAX_PATH);
-	GetFullPathName(config_file, MAX_PATH, full_path, &part_path);
-	*part_path='\0';
-	_tcscpy_s(config_file, full_path);
-	
+	GetAppPath(config_file);
 	_tcscat_s(config_file, L"\\lconfig.ini");
 
 	// [General]
@@ -191,21 +201,15 @@ void LoadConfig()
 void LoadIcons()
 {
 	wchar_t			path[MAX_PATH] = {0};
-    wchar_t			full_path[MAX_PATH] = {0};
-	LPTSTR			part_path;
-	
-	GetModuleFileName(NULL, path, MAX_PATH);
-	GetFullPathName(path, MAX_PATH, full_path, &part_path);
-	*part_path='\0';
-	_tcscpy_s(path, full_path);
-			
+    
+	GetAppPath(path);
 	_tcscat_s(path, L"\\skins\\");
 	_tcscat_s(path, skin);
 
 	//get number of icons contained in the skin 
 	numIcons = ExtractIconEx(path, -1, NULL, NULL, 0);
 
-	if (numIcons > 0)
+	if (numIcons > 1)
 	{
 		for (int i = 0; i < numIcons; ++i)
 		{
