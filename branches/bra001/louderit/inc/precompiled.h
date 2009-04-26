@@ -38,3 +38,17 @@
 
 using namespace std;
 
+#define _SECURE_ATL 1
+
+// ATL/WTL headers
+#include <atlbase.h>
+#include <atlapp.h>
+#include <atlwin.h>
+#include <atldlgs.h>
+#include <atlframe.h>
+#include <atlmisc.h>
+#include <atlctrls.h>
+#include <atlcrack.h>
+#include <atltheme.h>
+#include <atlctrlw.h>
+
