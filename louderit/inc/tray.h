@@ -6,18 +6,18 @@
 class TrayIcon
 {
 public:
-					TrayIcon(HWND hWnd);
+					TrayIcon(HWND hwnd);
 	virtual			~TrayIcon();
 
-	bool Add(HICON hIcon, LPCTSTR szTip);
-	bool			Update(HICON hIcon, LPCTSTR szTip);
+	bool			Add(HICON icon, const wchar_t* tip_text);
+	bool			Update(HICON icon, const wchar_t* tip_text);
 	bool			Remove();
 	bool			Restore();
-	bool			ShowBaloon(LPCTSTR szInfo, LPCTSTR szInfoTitle);
+	bool			ShowBaloon(const wchar_t* szInfo, const wchar_t* szInfoTitle);
 
 protected:
-	const HWND		m_hWnd;
-	bool			m_Setted;
+	const HWND		hwnd_;
+	bool			is_setted_;
 
 private:
 	NOTIFYICONDATA	nid;

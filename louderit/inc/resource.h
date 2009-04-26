@@ -4,6 +4,9 @@
 //
 #define IDI_ICON1                       101
 #define IDI_ICON2                       103
+#define IDR_MAINFRAME                   128
+#define IDR_MAINFRAME_OLD               129
+#define IDR_TRAYPOPUP					130
 
 // Next default values for new objects
 // 
