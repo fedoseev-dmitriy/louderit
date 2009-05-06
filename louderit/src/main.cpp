@@ -3,6 +3,7 @@
 #include "volume_impl.h"
 #include "volume_mx_impl.h"
 #include "lexical_cast.h"
+#include "resource.h"
 
 enum hotkeys_ids
 {
@@ -11,15 +12,6 @@ enum hotkeys_ids
 	HK_MUTEKEY
 };
 
-enum menu_ids
-{
-	IDM_OPEN_VOLUME_CONTROL = 40001,
-	IDM_SETTING_AUDIO_PARAMETR,
-	IDM_SETTING_PROGRAM,	
-	IDM_HELP,
-	IDM_ABOUT,
-	IDM_EXIT
-};
 // -----------------------------------------------------------------------------
 // Данные, отвечающие за реализацию хука на мышь
 // -----------------------------------------------------------------------------
@@ -123,16 +115,18 @@ BOOL SetHotKey(const wstring& SKey, const wstring& SMod, int NumKey)
 	return false;
 }
 
-// get application directory
-bool GetAppPath(wchar_t* app_path)
+//------------------------------------------------------------------------------
+// Getting the application directory
+//------------------------------------------------------------------------------
+bool GetAppPath(wchar_t *path)
 {
 	wchar_t		path_buff[MAX_PATH] = {0};
-	wchar_t*	path_name = 0;
+	wchar_t		*path_name = 0;
 		
 	if ((!GetModuleFileName(NULL, path_buff, MAX_PATH)) ||
-		(!GetFullPathName(path_buff, MAX_PATH, app_path, &path_name)))
+		(!GetFullPathName(path_buff, MAX_PATH, path, &path_name)))
 	{
-		*app_path = '\0';
+		*path = '\0';
 		return false;
 	}
 
@@ -253,16 +247,9 @@ void ProcessPopupMenu()
 	POINT	cursorPos;
 	UINT	command;
 
-	hMenu	= CreatePopupMenu();
-	AppendMenu(hMenu, MF_STRING, IDM_OPEN_VOLUME_CONTROL, L"Открыть &регулятор громкости");
-	AppendMenu(hMenu, MF_STRING, IDM_SETTING_AUDIO_PARAMETR, L"Настройка &аудиопараметров");
-	AppendMenu(hMenu, MF_SEPARATOR, 0, NULL) ;
-	AppendMenu(hMenu, MF_STRING, IDM_SETTING_PROGRAM, L"&Настройки программы");
-	AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
-	//AppendMenu(hMenu, MF_STRING, IDM_ABOUT, L"&О программе...");
-	AppendMenu(hMenu, MF_STRING, IDM_EXIT, L"&Выход");
+	hMenu = GetSubMenu(LoadMenu(hInst, MAKEINTRESOURCE(IDR_CONTEXT)), 0);
 
-	SetForegroundWindow(hwnd);
+SetForegroundWindow(hwnd);
 	GetCursorPos(&cursorPos);
 
 	command = (UINT)TrackPopupMenuEx(hMenu, TPM_RETURNCMD + TPM_VERTICAL, 
@@ -272,7 +259,7 @@ void ProcessPopupMenu()
 
 	switch (command)
 	{
-	case IDM_OPEN_VOLUME_CONTROL:
+	case ID_TRAYMENU_OPENMIXER:
 		{
 			if (isWindowsXP)
 			{
@@ -284,16 +271,16 @@ void ProcessPopupMenu()
 			}
 			break;
 		}
-	case IDM_SETTING_AUDIO_PARAMETR:
+	case ID_TRAYMENU_AUDIOPROPERTIES:
 		Launch(hwnd, L"rundll32.exe", L"shell32.dll,Control_RunDLL mmsys.cpl");
 		break;
-	case IDM_SETTING_PROGRAM:
+	case ID_TRAYMENU_SETTINGS:
 		Launch(hwnd, L"LConfig.exe");
 		break;
 		//case IDM_ABOUT:
 		//  Launch(L"LConfig.exe -a");
 		//break;
-	case IDM_EXIT:
+	case ID_TRAYMENU_EXIT:	
 		DestroyWindow(hwnd);
 		break;
 	}
