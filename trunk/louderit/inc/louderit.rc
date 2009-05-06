@@ -94,6 +94,25 @@ BEGIN
     END
 END
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_CONTEXT MENU 
+BEGIN
+    POPUP "Tray Menu"
+    BEGIN
+        MENUITEM "&Open mixer",                 ID_TRAYMENU_OPENMIXER
+        MENUITEM "&Audio properties",           ID_TRAYMENU_AUDIOPROPERTIES
+        MENUITEM SEPARATOR
+        MENUITEM "&Settings",                   ID_TRAYMENU_SETTINGS
+        MENUITEM SEPARATOR
+        MENUITEM "&Exit",                       ID_TRAYMENU_EXIT
+    END
+END
+
 #endif    // Russian resources
 /////////////////////////////////////////////////////////////////////////////
 

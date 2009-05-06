@@ -1,0 +1,6 @@
+LouderIt Team:
+--------------
+
+Developer: Ilia Demianov <Turbid> - turbidit (at) gmail.com
+Developer: Dmitriy Fedoseev - fedoseev.dmitriy (at) gmail.com
+Icons: Artem Golubev <Bizkit>
