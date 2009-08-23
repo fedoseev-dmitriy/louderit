@@ -28,6 +28,7 @@ UINT					WM_LOADCONFIG		= 0;
 //------------------------------------------------------------------------------
 HINSTANCE				hInst = NULL;
 HWND					hwnd = NULL;
+HWND					hPropDlg = NULL;	
 bool					isWindowsXP = false;
 int						deviceNumber = 0;
 
@@ -241,6 +242,27 @@ wstring GetMixerCmdLine()
 }
 
 //-----------------------------------------------------------------------------
+BOOL CALLBACK DlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
+ switch (message)
+ {
+  case WM_INITDIALOG: /* сообщение о создании диалога */
+	  return TRUE;
+  case WM_COMMAND:    /* сообщение от управляющих элементов */
+	switch (LOWORD(wParam)) 
+    { 
+		case IDOK: 
+			MessageBox(hwnd, L"OK", L"Error!", MB_OK | MB_ICONERROR);
+			return TRUE; 
+	    case IDCANCEL: 
+			DestroyWindow(hwndDlg); 
+            hPropDlg = NULL; 
+            return TRUE; 
+    } 
+ }
+ return FALSE;
+}
+
+//-----------------------------------------------------------------------------
 void ProcessPopupMenu()
 {
 	HMENU	hMenu;
@@ -275,7 +297,8 @@ SetForegroundWindow(hwnd);
 		Launch(hwnd, L"rundll32.exe", L"shell32.dll,Control_RunDLL mmsys.cpl");
 		break;
 	case ID_TRAYMENU_SETTINGS:
-		Launch(hwnd, L"LConfig.exe");
+		//Launch(hwnd, L"LConfig.exe");
+		hPropDlg = CreateDialog(hInst, MAKEINTRESOURCE(IDD_PROPDLG), hwnd, (DLGPROC)DlgProc);
 		break;
 		//case IDM_ABOUT:
 		//  Launch(L"LConfig.exe -a");
@@ -386,6 +409,7 @@ void VolumeDown()
 
 
 //------------------------------------------------------------------------------
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	if (message == WM_LOADCONFIG)
@@ -601,10 +625,10 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	wc.lpfnWndProc		= (WNDPROC)WndProc;
 	wc.cbClsExtra		= 0;
 	wc.cbWndExtra		= 0;
-	wc.hInstance		= 0;
+	wc.hInstance		= hInstance;
 	wc.hIcon			= NULL;
-	wc.hCursor			= 0;
-	wc.hbrBackground	= 0;
+	wc.hCursor			= NULL;
+	wc.hbrBackground	= NULL;
 	wc.lpszMenuName		= NULL;
 	wc.lpszClassName	= L"LouderIt";
 
