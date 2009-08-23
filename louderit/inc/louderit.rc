@@ -113,6 +113,61 @@ BEGIN
     END
 END
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_PROPDLG DIALOGEX 0, 0, 316, 186
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,205,165,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,259,165,50,14
+    CONTROL         "",IDC_TAB,"SysTabControl32",0x0,7,7,302,152
+END
+
+IDD_PROPTAB_HK DIALOGEX 0, 0, 277, 127
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg", 400, 0, 0x0
+BEGIN
+    GROUPBOX        "Mute",IDC_STATIC,7,7,263,40
+    CONTROL         "Ctrl",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,42,24,27,10
+    CONTROL         "Alt",IDC_CHECK2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,78,24,25,10
+    CONTROL         "Shift",IDC_CHECK3,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,114,24,31,10
+    CONTROL         "Win",IDC_CHECK4,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,150,24,28,10
+    COMBOBOX        IDC_COMBO1,186,24,48,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_PROPDLG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 309
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 179
+    END
+
+    IDD_PROPTAB_HK, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 270
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 120
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
 #endif    // Russian resources
 /////////////////////////////////////////////////////////////////////////////
 
