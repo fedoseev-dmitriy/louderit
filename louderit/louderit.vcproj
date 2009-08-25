@@ -334,6 +334,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\settings.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\tray.cpp"
 				>
 			</File>
@@ -369,6 +373,10 @@
 			</File>
 			<File
 				RelativePath=".\inc\resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\inc\settings.h"
 				>
 			</File>
 			<File

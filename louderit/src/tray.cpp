@@ -16,7 +16,7 @@ TrayIcon::~TrayIcon()
 }
 
 //-----------------------------------------------------------------------------
-bool TrayIcon::Add( HICON hIcon, LPCTSTR szTip )
+bool TrayIcon::Add(HICON hIcon, LPCTSTR szTip)
 {
 	if (m_Setted)
 		return false;

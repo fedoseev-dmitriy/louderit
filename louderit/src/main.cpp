@@ -2,6 +2,7 @@
 #include "tray.h"
 #include "volume_impl.h"
 #include "volume_mx_impl.h"
+#include "settings.h"
 #include "lexical_cast.h"
 #include "resource.h"
 
@@ -28,7 +29,6 @@ UINT					WM_LOADCONFIG		= 0;
 //------------------------------------------------------------------------------
 HINSTANCE				hInst = NULL;
 HWND					hwnd = NULL;
-HWND					hPropDlg = NULL;	
 bool					isWindowsXP = false;
 int						deviceNumber = 0;
 
@@ -241,26 +241,6 @@ wstring GetMixerCmdLine()
 	return str;
 }
 
-//-----------------------------------------------------------------------------
-BOOL CALLBACK DlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
- switch (message)
- {
-  case WM_INITDIALOG: /* сообщение о создании диалога */
-	  return TRUE;
-  case WM_COMMAND:    /* сообщение от управляющих элементов */
-	switch (LOWORD(wParam)) 
-    { 
-		case IDOK: 
-			MessageBox(hwnd, L"OK", L"Error!", MB_OK | MB_ICONERROR);
-			return TRUE; 
-	    case IDCANCEL: 
-			DestroyWindow(hwndDlg); 
-            hPropDlg = NULL; 
-            return TRUE; 
-    } 
- }
- return FALSE;
-}
 
 //-----------------------------------------------------------------------------
 void ProcessPopupMenu()
@@ -298,7 +278,7 @@ SetForegroundWindow(hwnd);
 		break;
 	case ID_TRAYMENU_SETTINGS:
 		//Launch(hwnd, L"LConfig.exe");
-		hPropDlg = CreateDialog(hInst, MAKEINTRESOURCE(IDD_PROPDLG), hwnd, (DLGPROC)DlgProc);
+		ShowSettingsDlg(hwnd);
 		break;
 		//case IDM_ABOUT:
 		//  Launch(L"LConfig.exe -a");

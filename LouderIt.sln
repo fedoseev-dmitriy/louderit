@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "louderit", "louderit\louderit.vcproj", "{BA0C5F62-A3C8-4AA2-8E35-E70CFBDE83C2}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EDBAB2FA-7593-403F-8E9B-A9E71C7DEA00}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{FEE5FE0A-8A70-4CE0-BCBF-007C66121AA3}"
 	ProjectSection(SolutionItems) = preProject
+		doc\authors.txt = doc\authors.txt
 		doc\changelog.txt = doc\changelog.txt
+		doc\copying.txt = doc\copying.txt
 		doc\readme_ru.txt = doc\readme_ru.txt
 		doc\todo.txt = doc\todo.txt
 	EndProjectSection

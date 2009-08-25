@@ -9,7 +9,7 @@ public:
 					TrayIcon(HWND hWnd);
 	virtual			~TrayIcon();
 
-	bool Add(HICON hIcon, LPCTSTR szTip);
+	bool			Add(HICON hIcon, LPCTSTR szTip);
 	bool			Update(HICON hIcon, LPCTSTR szTip);
 	bool			Remove();
 	bool			Restore();
