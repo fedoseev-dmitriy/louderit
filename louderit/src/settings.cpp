@@ -1,17 +1,43 @@
 #include "precompiled.h"
 #include "settings.h"
+#include "lexical_cast.h"
 #include "resource.h"
 
 HWND hSettingsWnd = NULL;
-HWND hTabControl = NULL;
+HWND hUpCombo = NULL;
+HWND hDownCombo = NULL;
+wchar_t *wc = NULL;
 
 //-----------------------------------------------------------------------------
 bool ShowSettingsDlg(HWND hParentWnd)
 {
-	if (hSettingsWnd = CreateDialog(0, MAKEINTRESOURCE(IDD_PROPDLG), hParentWnd, (DLGPROC)SettingsDlgProc))
+	if (hSettingsWnd = CreateDialog(0, MAKEINTRESOURCE(IDD_SETTINGS), hParentWnd, (DLGPROC)SettingsDlgProc))
 		return true;
 	else
 		return false;
+}
+
+
+//-----------------------------------------------------------------------------
+wstring getKeyName(UINT vk, BOOL fExtended)
+{
+	LONG lScan = MapVirtualKey(vk, 0) << 16;
+
+	// if it's an extended key, add the extended flag
+	if (fExtended)
+		lScan |= 0x01000000L;
+	int nBufferLen = 64;
+
+	wstring str;
+	int nLen;
+	do
+	{
+		nBufferLen *= 2;
+		str.resize(nBufferLen);
+		nLen = GetKeyNameText(lScan, &str[0], nBufferLen);
+	}
+	while (nLen == nBufferLen);
+	return str;
 }
 
 //-----------------------------------------------------------------------------
@@ -20,17 +46,11 @@ INT_PTR CALLBACK SettingsDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	switch (uMsg)
 	{
 		case WM_INITDIALOG:	// before a dialog is displayed
-			hTabControl = GetDlgItem(hwndDlg, IDC_TAB);
+			hUpCombo = GetDlgItem(hwndDlg, IDC_UPCOMBO);
+			SendMessage(hUpCombo, CB_ADDSTRING, 0, (LPARAM)L"None");
 			
-			//DLGHDR *pHdr = (DLGHDR *) LocalAlloc(LPTR, sizeof(DLGHDR)); 
-			//TCITEM tie;
-			//SetWindowLong(hwndDlg, GWL_USERDATA, (LONG) pHdr); 
-			//pHdr->hwndTab = GetDlgItem(hwndDlg, IDC_TAB);
-			//tie.mask = TCIF_TEXT | TCIF_IMAGE; 
-			//tie.iImage = -1; 
-			//tie.pszText = L"First"; 
-			//TabCtrl_InsertItem(pHdr->hwndTab, 0, &tie);
-			//pHdr->apRes[0] = DoLockDlgRes(MAKEINTRESOURCE(IDD_PROPTAB_HK)); 
+			SendMessage(hUpCombo, CB_SETCURSEL, 0, 0);
+			
 
 			return TRUE;
 		case WM_COMMAND:	// notification msgs from child controls
