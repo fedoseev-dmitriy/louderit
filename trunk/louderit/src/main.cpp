@@ -215,8 +215,16 @@ void LoadIcons()
 	{
 		// FIXME!
 		numIcons = 2;
-		hIcons.push_back(LoadIcon(NULL, IDI_ERROR));
-		hIcons.push_back(LoadIcon(NULL, IDI_ERROR));
+		if (isWindowsXP)
+		{
+			hIcons.push_back(LoadIcon(NULL, IDI_ERROR));
+			hIcons.push_back(LoadIcon(NULL, IDI_ERROR));
+		}
+		else
+		{
+			hIcons.push_back(ExtractIcon(hInst, L"SndVol.exe", 1));
+			hIcons.push_back(ExtractIcon(hInst, L"SndVol.exe", 2));
+		}
 	}
 }
 
