@@ -1,12 +1,13 @@
 #include "precompiled.h"
 #include "settings.h"
-#include "lexical_cast.h"
 #include "resource.h"
 
-HWND hSettingsWnd = NULL;
-HWND hUpCombo = NULL;
-HWND hDownCombo = NULL;
-wchar_t *wc = NULL;
+HWND hSettingsWnd		= NULL;
+HWND hActionComboBox	= NULL;
+HWND hHKComboBox		= NULL;
+
+UINT id = 0;
+
 
 //-----------------------------------------------------------------------------
 bool ShowSettingsDlg(HWND hParentWnd)
@@ -46,18 +47,45 @@ INT_PTR CALLBACK SettingsDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	switch (uMsg)
 	{
 		case WM_INITDIALOG:	// before a dialog is displayed
-			hUpCombo = GetDlgItem(hwndDlg, IDC_UPCOMBO);
-			SendMessage(hUpCombo, CB_ADDSTRING, 0, (LPARAM)L"None");
+			hActionComboBox = GetDlgItem(hwndDlg, IDC_ACTCOMBO);
+			ComboBox_AddString(hActionComboBox, L"Volume Up");
+			ComboBox_AddString(hActionComboBox, L"Volume Down");
+			ComboBox_AddString(hActionComboBox, L"Volume Mute");
+			ComboBox_AddString(hActionComboBox, L"Show Mixer");
+			ComboBox_SetCurSel(hActionComboBox, 0);
 			
-			SendMessage(hUpCombo, CB_SETCURSEL, 0, 0);
-			
-
+			hHKComboBox = GetDlgItem(hwndDlg, IDC_HKCOMBO);
+			ComboBox_AddString(hHKComboBox, L"None");
+			// adding hokeys names to list
+			HKComboBox_AddKey(hHKComboBox, VK_BACK, false);
+			HKComboBox_AddKey(hHKComboBox, VK_TAB, false);
+			HKComboBox_AddKey(hHKComboBox, VK_RETURN, false);
+			HKComboBox_AddKey(hHKComboBox, VK_CAPITAL, false);
+			HKComboBox_AddKey(hHKComboBox, VK_ESCAPE, false);
+			HKComboBox_AddKey(hHKComboBox, VK_SPACE, false);
+			for (id=VK_PRIOR; id<=VK_DOWN; id++)
+				HKComboBox_AddKey(hHKComboBox, id, true);
+			for (id=VK_INSERT; id<=VK_DELETE; id++)
+				HKComboBox_AddKey(hHKComboBox, id, true);
+			for (id=0x30; id<=0x39; id++)				//numbers
+				HKComboBox_AddKey(hHKComboBox, id, false);
+			for (id=0x41; id<=0x5A; id++)				//words
+				HKComboBox_AddKey(hHKComboBox, id, false);
+			for (id=VK_NUMPAD0; id<=VK_ADD; id++)		//numpad
+				HKComboBox_AddKey(hHKComboBox, id, false);
+			for (id=VK_SUBTRACT; id<=VK_F12; id++)		//numpad and F1-F12
+				HKComboBox_AddKey(hHKComboBox, id, false);
+			HKComboBox_AddKey(hHKComboBox, VK_SNAPSHOT, false);
+			HKComboBox_AddKey(hHKComboBox, VK_SCROLL, false);
+			ComboBox_SetCurSel(hHKComboBox, 0);
+							
 			return TRUE;
+		
 		case WM_COMMAND:	// notification msgs from child controls
 			switch (LOWORD(wParam)) 
 			{ 
 				case IDOK: 
-					MessageBox(hwndDlg, L"OK", L"Error!", MB_OK | MB_ICONERROR);
+					MessageBox(hwndDlg, L"OK", L"Warning", MB_OK | MB_ICONWARNING);
 					return TRUE; 
 				case IDCANCEL: 
 					DestroyWindow(hwndDlg); 
