@@ -59,7 +59,7 @@ int							steps = 0;
 int							trayCommands[] = {0,0,0};
 int							balance = 50;
 
-wchar_t						config_file[MAX_PATH] = {0};
+//wchar_t						config_file[MAX_PATH] = {0};
 wchar_t						device_name[256] = {0};
 wchar_t						skin[256] = {0};
 
@@ -117,31 +117,11 @@ BOOL SetHotKey(const wstring& SKey, const wstring& SMod, int NumKey)
 }
 
 //------------------------------------------------------------------------------
-// Getting the application directory
-//------------------------------------------------------------------------------
-bool GetAppPath(wchar_t *path)
-{
-	wchar_t		path_buff[MAX_PATH] = {0};
-	wchar_t		*path_name = 0;
-		
-	if ((!GetModuleFileName(NULL, path_buff, MAX_PATH)) ||
-		(!GetFullPathName(path_buff, MAX_PATH, path, &path_name)))
-	{
-		*path = '\0';
-		return false;
-	}
-
-	*path_name = '\0';
-	return true;
-}
-
-//------------------------------------------------------------------------------
 // Загрузка настроек
 //------------------------------------------------------------------------------
-void LoadConfig()
+void LoadConfig() //FIXME! mus be move to settings.c
 {
-	GetAppPath(config_file);
-	_tcscat_s(config_file, L"\\lconfig.ini");
+	GetConfigFile();
 
 	// [General]
 	//...устройства
@@ -193,7 +173,7 @@ void LoadConfig()
 // Загрузка иконок
 //------------------------------------------------------------------------------
 
-void LoadIcons()
+void LoadIcons() 
 {
 	wchar_t			path[MAX_PATH] = {0};
     

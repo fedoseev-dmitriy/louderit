@@ -2,25 +2,45 @@
 #include "settings.h"
 #include "resource.h"
 
+wchar_t config_name[] = L"lconfig.ini";
+wchar_t config_file[MAX_PATH] = {0};
+
 HWND hSettingsWnd		= NULL;
 HWND hActionComboBox	= NULL;
 HWND hHKComboBox		= NULL;
 
 UINT id = 0;
 
-
-//-----------------------------------------------------------------------------
-bool ShowSettingsDlg(HWND hParentWnd)
+//------------------------------------------------------------------------------
+// Getting the application directory
+//------------------------------------------------------------------------------
+bool GetAppPath(wchar_t *path)
 {
-	if (hSettingsWnd = CreateDialog(0, MAKEINTRESOURCE(IDD_SETTINGS), hParentWnd, (DLGPROC)SettingsDlgProc))
-		return true;
-	else
+	wchar_t		path_buff[MAX_PATH] = {0};
+	wchar_t		*path_name = 0;
+		
+	if ((!GetModuleFileName(NULL, path_buff, MAX_PATH)) ||
+		(!GetFullPathName(path_buff, MAX_PATH, path, &path_name)))
+	{
+		*path = '\0';
 		return false;
+	}
+
+	*path_name = '\0';
+	return true;
 }
 
+//------------------------------------------------------------------------------
+// Getting the config file path
+//------------------------------------------------------------------------------
+void GetConfigFile(void)
+{
+	GetAppPath(config_file);
+	_tcscat_s(config_file, config_name);
+}
 
 //-----------------------------------------------------------------------------
-wstring getKeyName(UINT vk, BOOL fExtended)
+wstring GetKeyName(UINT vk, BOOL fExtended)
 {
 	LONG lScan = MapVirtualKey(vk, 0) << 16;
 
@@ -39,6 +59,17 @@ wstring getKeyName(UINT vk, BOOL fExtended)
 	}
 	while (nLen == nBufferLen);
 	return str;
+}
+
+//-----------------------------------------------------------------------------
+void SaveConfig()
+{
+	// FIXME!
+	WritePrivateProfileString(L"HotKeys", L"VolumeUp", L"0", config_file);
+	WritePrivateProfileString(L"HotKeys", L"VolumeDown", L"0", config_file);
+	WritePrivateProfileString(L"HotKeys", L"VolumeMute", L"0", config_file);
+	WritePrivateProfileString(L"HotKeys", L"ShowMixer", L"0", config_file);
+
 }
 
 //-----------------------------------------------------------------------------
@@ -85,7 +116,9 @@ INT_PTR CALLBACK SettingsDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			switch (LOWORD(wParam)) 
 			{ 
 				case IDOK: 
-					MessageBox(hwndDlg, L"OK", L"Warning", MB_OK | MB_ICONWARNING);
+					SaveConfig();
+					DestroyWindow(hwndDlg); 
+					hSettingsWnd = NULL; 
 					return TRUE; 
 				case IDCANCEL: 
 					DestroyWindow(hwndDlg); 
@@ -94,4 +127,13 @@ INT_PTR CALLBACK SettingsDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			}
 	}
 	return FALSE;
+}
+
+//-----------------------------------------------------------------------------
+bool ShowSettingsDlg(HWND hParentWnd)
+{
+	if (hSettingsWnd = CreateDialog(0, MAKEINTRESOURCE(IDD_SETTINGS), hParentWnd, (DLGPROC)SettingsDlgProc))
+		return true;
+	else
+		return false;
 }
