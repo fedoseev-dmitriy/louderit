@@ -17,10 +17,6 @@ enum hotkeys_ids
 // Данные, отвечающие за реализацию хука на мышь
 // -----------------------------------------------------------------------------
 
-bool	scrollWithTray	= 0;		// Вкл./выкл. управление скроллом над треем
-bool	scrollWithCtrl	= 0;
-bool	scrollWithAlt	= 0;
-bool	scrollWithShift	= 0;
 POINT	lastTrayPos;		// Координаты мыши над треем
 
 UINT					WM_TASKBARCREATED	= 0;
@@ -30,7 +26,6 @@ UINT					WM_LOADCONFIG		= 0;
 HINSTANCE				hInst = NULL;
 HWND					hwnd = NULL;
 bool					isWindowsXP = false;
-int						deviceNumber = 0;
 
 vector<HICON>			hIcons;
 int						iconIndex = 0;
@@ -49,19 +44,9 @@ TrayIcon				*pTrayIcon = NULL;
 
 HHOOK					hHook;
 
-
-//------------------------------------------------------------------------------
-// Settings
-//------------------------------------------------------------------------------
-
-bool						balloonHint = false;
-int							steps = 0;
 int							trayCommands[] = {0,0,0};
-int							balance = 50;
 
-//wchar_t						config_file[MAX_PATH] = {0};
-wchar_t						device_name[256] = {0};
-wchar_t						skin[256] = {0};
+UINT						deviceNumber = 0;
 
 //-----------------------------------------------------------------------------
 bool Launch(HWND hwnd, const wchar_t* command_line, const wchar_t* parameters = NULL,
@@ -151,7 +136,7 @@ void LoadConfig() //FIXME! mus be move to settings.c
 	//...скорости регулирования
 	steps = GetPrivateProfileInt(L"General", L"Steps", 5, config_file);
 
-	GetPrivateProfileString(L"View", L"Skin", L"Classic.lsk", &skin[0], 1024, config_file);
+	GetPrivateProfileString(L"View", L"Skin", L"Classic.lsk", &skin_name[0], 1024, config_file);
 	balloonHint = GetPrivateProfileInt(L"View", L"BalloonHint", 0, config_file);
 
 	scrollWithTray = GetPrivateProfileInt(L"Mouse", L"Tray", 1, config_file);
@@ -179,7 +164,7 @@ void LoadIcons()
     
 	GetAppPath(path);
 	_tcscat_s(path, L"\\skins\\");
-	_tcscat_s(path, skin);
+	_tcscat_s(path, skin_name);
 
 	//get number of icons contained in the skin 
 	numIcons = ExtractIconEx(path, -1, NULL, NULL, 0);
