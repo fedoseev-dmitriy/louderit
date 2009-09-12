@@ -2,14 +2,25 @@
 #include "settings.h"
 #include "resource.h"
 
-wchar_t config_name[] = L"lconfig.ini";
-wchar_t config_file[MAX_PATH] = {0};
+HWND hSettingsWnd = NULL;
+HWND hActionComboBox = NULL;
+HWND hHKComboBox = NULL;
 
-HWND hSettingsWnd		= NULL;
-HWND hActionComboBox	= NULL;
-HWND hHKComboBox		= NULL;
+wchar_t config_name[] = L"lconfig.ini";	// config filename
+wchar_t config_file[MAX_PATH] = {0};	// config fullpath
 
-UINT id = 0;
+//------------------------------------------------------------------------------
+// Settings
+//------------------------------------------------------------------------------
+wchar_t device_name[MAX_PATH] = {0};
+int steps = 0;
+wchar_t skin_name[MAX_PATH] = {0};
+int balance = 50;
+bool balloonHint = false;
+bool scrollWithTray = false;
+bool scrollWithCtrl = false;
+bool scrollWithAlt = false;
+bool scrollWithShift = false;
 
 //------------------------------------------------------------------------------
 // Getting the application directory
@@ -75,6 +86,8 @@ void SaveConfig()
 //-----------------------------------------------------------------------------
 INT_PTR CALLBACK SettingsDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	UINT id = 0;
+	
 	switch (uMsg)
 	{
 		case WM_INITDIALOG:	// before a dialog is displayed
