@@ -51,25 +51,28 @@ void GetConfigFile(void)
 }
 
 //-----------------------------------------------------------------------------
-wstring GetKeyName(UINT vk, BOOL fExtended)
+wstring GetKeyName(UINT key)
 {
-	LONG lScan = MapVirtualKey(vk, 0) << 16;
+	wchar_t keyName[64];
 
-	// if it's an extended key, add the extended flag
-	if (fExtended)
-		lScan |= 0x01000000L;
-	int nBufferLen = 64;
-
-	wstring str;
-	int nLen;
-	do
+	UINT scanCode = MapVirtualKey(key, 0) << 16;
+	switch(key)
 	{
-		nBufferLen *= 2;
-		str.resize(nBufferLen);
-		nLen = GetKeyNameText(lScan, &str[0], nBufferLen);
+		case VK_INSERT:
+		case VK_DELETE:
+		case VK_HOME:
+		case VK_END:
+		case VK_NEXT:
+		case VK_PRIOR:
+		case VK_LEFT:
+		case VK_RIGHT:
+		case VK_UP:
+		case VK_DOWN:
+			scanCode |= 0x01000000; // add extendet flag
 	}
-	while (nLen == nBufferLen);
-	return str;
+	
+	GetKeyNameText(scanCode, keyName, sizeof(keyName));
+	return keyName;
 }
 
 //-----------------------------------------------------------------------------
@@ -101,26 +104,26 @@ INT_PTR CALLBACK SettingsDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			hHKComboBox = GetDlgItem(hwndDlg, IDC_HKCOMBO);
 			ComboBox_AddString(hHKComboBox, L"None");
 			// adding hokeys names to list
-			HKComboBox_AddKey(hHKComboBox, VK_BACK, false);
-			HKComboBox_AddKey(hHKComboBox, VK_TAB, false);
-			HKComboBox_AddKey(hHKComboBox, VK_RETURN, false);
-			HKComboBox_AddKey(hHKComboBox, VK_CAPITAL, false);
-			HKComboBox_AddKey(hHKComboBox, VK_ESCAPE, false);
-			HKComboBox_AddKey(hHKComboBox, VK_SPACE, false);
+			HKComboBox_AddKey(hHKComboBox, VK_BACK);
+			HKComboBox_AddKey(hHKComboBox, VK_TAB);
+			HKComboBox_AddKey(hHKComboBox, VK_RETURN);
+			HKComboBox_AddKey(hHKComboBox, VK_CAPITAL);
+			HKComboBox_AddKey(hHKComboBox, VK_ESCAPE);
+			HKComboBox_AddKey(hHKComboBox, VK_SPACE);
 			for (id=VK_PRIOR; id<=VK_DOWN; id++)
-				HKComboBox_AddKey(hHKComboBox, id, true);
+				HKComboBox_AddKey(hHKComboBox, id);
 			for (id=VK_INSERT; id<=VK_DELETE; id++)
-				HKComboBox_AddKey(hHKComboBox, id, true);
+				HKComboBox_AddKey(hHKComboBox, id);
 			for (id=0x30; id<=0x39; id++)				//numbers
-				HKComboBox_AddKey(hHKComboBox, id, false);
+				HKComboBox_AddKey(hHKComboBox, id);
 			for (id=0x41; id<=0x5A; id++)				//words
-				HKComboBox_AddKey(hHKComboBox, id, false);
+				HKComboBox_AddKey(hHKComboBox, id);
 			for (id=VK_NUMPAD0; id<=VK_ADD; id++)		//numpad
-				HKComboBox_AddKey(hHKComboBox, id, false);
+				HKComboBox_AddKey(hHKComboBox, id);
 			for (id=VK_SUBTRACT; id<=VK_F12; id++)		//numpad and F1-F12
-				HKComboBox_AddKey(hHKComboBox, id, false);
-			HKComboBox_AddKey(hHKComboBox, VK_SNAPSHOT, false);
-			HKComboBox_AddKey(hHKComboBox, VK_SCROLL, false);
+				HKComboBox_AddKey(hHKComboBox, id);
+			HKComboBox_AddKey(hHKComboBox, VK_SNAPSHOT);
+			HKComboBox_AddKey(hHKComboBox, VK_SCROLL);
 			ComboBox_SetCurSel(hHKComboBox, 0);
 							
 			return TRUE;
