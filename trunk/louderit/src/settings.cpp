@@ -1,10 +1,15 @@
 #include "precompiled.h"
 #include "settings.h"
 #include "resource.h"
+#include "WinHotkeyCtrl.h"
+
+vector<wstring> settingsItems;
 
 HWND hSettingsWnd = NULL;
-HWND hActionComboBox = NULL;
-HWND hHKComboBox = NULL;
+HWND hSettingsListBox = NULL;
+
+HWND hGeneralPage = NULL;
+HWND hHotkeysPage = NULL;
 
 wchar_t config_name[] = L"lconfig.ini";	// config filename
 wchar_t config_file[MAX_PATH] = {0};	// config fullpath
@@ -22,10 +27,16 @@ bool scrollWithCtrl = false;
 bool scrollWithAlt = false;
 bool scrollWithShift = false;
 
+static WNDPROC OldEditProc;
+static DWORD tempModifiers;
+static DWORD modifiers;
+static DWORD virtualKey;
+static TCHAR *keySeparator = _T(" + ");
+
 //------------------------------------------------------------------------------
 // Getting the application directory
 //------------------------------------------------------------------------------
-bool GetAppPath(wchar_t *path)
+bool getAppPath(wchar_t *path)
 {
 	wchar_t		path_buff[MAX_PATH] = {0};
 	wchar_t		*path_name = 0;
@@ -44,39 +55,55 @@ bool GetAppPath(wchar_t *path)
 //------------------------------------------------------------------------------
 // Getting the config file path
 //------------------------------------------------------------------------------
-void GetConfigFile(void)
+void getConfigFile(void)
 {
-	GetAppPath(config_file);
+	getAppPath(config_file);
 	_tcscat_s(config_file, config_name);
 }
 
-//-----------------------------------------------------------------------------
-wstring GetKeyName(UINT key)
-{
-	wchar_t keyName[64];
+////-----------------------------------------------------------------------------
+//static const TCHAR* getKeyName(DWORD key) {
+//	static TCHAR keyName[64];
+//	int nameLen = 0;
+//	ZeroMemory(keyName, sizeof(keyName));
+//	if (key & MOD_CONTROL) {
+//		GetKeyNameText(MAKELPARAM(0, MapVirtualKey(VK_CONTROL, 0)), keyName, 64);
+//		_tcscat(keyName, keySeparator);
+//		nameLen = _tcslen(keyName);
+//	}
+//	if (key & MOD_SHIFT) {
+//		GetKeyNameText(MAKELPARAM(0, MapVirtualKey(VK_SHIFT, 0)), &keyName[nameLen], 64 - nameLen);
+//		_tcscat(keyName, keySeparator);
+//		nameLen = _tcslen(keyName);
+//	}
+//	if (key & MOD_ALT) {
+//		GetKeyNameText(MAKELPARAM(0, MapVirtualKey(VK_MENU, 0)), &keyName[nameLen], 64 - nameLen);
+//		_tcscat(keyName, keySeparator);
+//		nameLen = _tcslen(keyName);
+//	}
+//	if ((key & 0xFFFF) != 0) {
+//		DWORD scanCode = MapVirtualKey(key & 0xFFFF, 0);
+//		switch(key & 0xFFFF) {
+//		case VK_INSERT:
+//		case VK_DELETE:
+//		case VK_HOME:
+//		case VK_END:
+//		case VK_NEXT:
+//		case VK_PRIOR:
+//		case VK_LEFT:
+//		case VK_RIGHT:
+//		case VK_UP:
+//		case VK_DOWN:
+//			scanCode |= 0x100; // Add extended bit
+//		}
+//		GetKeyNameText(MAKELPARAM(0, scanCode), &keyName[nameLen], 64 - nameLen);
+//		nameLen = _tcslen(keyName);
+//	}
+//	return keyName;
+//}
 
-	UINT scanCode = MapVirtualKey(key, 0) << 16;
-	switch(key)
-	{
-		case VK_INSERT:
-		case VK_DELETE:
-		case VK_HOME:
-		case VK_END:
-		case VK_NEXT:
-		case VK_PRIOR:
-		case VK_LEFT:
-		case VK_RIGHT:
-		case VK_UP:
-		case VK_DOWN:
-			scanCode |= 0x01000000; // add extendet flag
-	}
-	
-	GetKeyNameText(scanCode, keyName, sizeof(keyName));
-	return keyName;
-}
-
 //-----------------------------------------------------------------------------
-void SaveConfig()
+void saveConfig()
 {
 	// FIXME!
 	WritePrivateProfileString(L"HotKeys", L"VolumeUp", L"0", config_file);
@@ -86,7 +113,106 @@ void SaveConfig()
 
 }
 
+//static void refreshPreview(HWND hwnd) 
+//{
+//	SetWindowText(hwnd, getKeyName(virtualKey | modifiers));
+//}
+//
+//static LRESULT CALLBACK HKEditProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+//{
+//	switch (msg) {
+//		case WM_CREATE:
+//			virtualKey = 0;
+//			break;
+//		case WM_SYSKEYDOWN:
+//		case WM_KEYDOWN:
+//			if (virtualKey != 0) {
+//				virtualKey = 0;
+//			}
+//		    switch (wParam)
+//			{
+//				case VK_CONTROL:
+//				case VK_LCONTROL:
+//				case VK_RCONTROL: tempModifiers = MOD_CONTROL; break;
+//				case VK_MENU:
+//				case VK_LMENU: 
+//				case VK_RMENU: tempModifiers = MOD_ALT; break;
+//				case VK_SHIFT:
+//				case VK_LSHIFT:
+//				case VK_RSHIFT: tempModifiers = MOD_SHIFT; break;
+//				
+//				default:
+//					virtualKey = wParam;
+//					break;
+//			}
+//			modifiers = tempModifiers;
+//			refreshPreview(hwnd);
+//			return 0;
+//		case WM_KEYUP:
+//		case WM_SYSKEYUP:
+//			switch (wParam)
+//			{
+//				case VK_SHIFT:
+//					tempModifiers &= ~MOD_SHIFT;
+//					break;
+//				case VK_CONTROL:
+//					tempModifiers &= ~MOD_CONTROL;
+//					break;
+//				case VK_MENU:
+//					tempModifiers &= ~MOD_ALT;
+//					break;
+//				default:
+//					break;
+//			}
+//			if (virtualKey == 0) {
+//				modifiers = tempModifiers;
+//				refreshPreview(hwnd);
+//			}
+//		case WM_CHAR:
+//		case WM_PASTE:
+//			return 0;
+//		case WM_SETFOCUS:
+//			modifiers = 0;
+//			tempModifiers = 0;
+//			virtualKey = 0;
+//			refreshPreview(hwnd);
+//			break;
+//		case WM_GETDLGCODE:
+//			return DLGC_WANTARROWS|DLGC_WANTALLKEYS| DLGC_WANTTAB;
+//	}
+//	return CallWindowProc(OldEditProc, hwnd, msg, wParam, lParam);
+//}
+//
 //-----------------------------------------------------------------------------
+INT_PTR CALLBACK GeneralPage_Proc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	
+	switch (uMsg)
+	{
+		case WM_INITDIALOG:	// before a dialog is displayed
+				
+			return TRUE;
+		
+		case WM_COMMAND:	// notification msgs from child controls
+			return TRUE;
+	}
+	return FALSE;
+}
+
+INT_PTR CALLBACK HotkeysPage_Proc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMsg)
+	{
+		case WM_INITDIALOG:	// before a dialog is displayed
+				
+			return TRUE;
+		
+		case WM_COMMAND:	// notification msgs from child controls
+			return TRUE;
+	}
+	return FALSE;
+}
+
 INT_PTR CALLBACK SettingsDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	UINT id = 0;
@@ -94,48 +220,45 @@ INT_PTR CALLBACK SettingsDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	switch (uMsg)
 	{
 		case WM_INITDIALOG:	// before a dialog is displayed
-			hActionComboBox = GetDlgItem(hwndDlg, IDC_ACTCOMBO);
-			ComboBox_AddString(hActionComboBox, L"Volume Up");
-			ComboBox_AddString(hActionComboBox, L"Volume Down");
-			ComboBox_AddString(hActionComboBox, L"Volume Mute");
-			ComboBox_AddString(hActionComboBox, L"Show Mixer");
-			ComboBox_SetCurSel(hActionComboBox, 0);
 			
-			hHKComboBox = GetDlgItem(hwndDlg, IDC_HKCOMBO);
-			ComboBox_AddString(hHKComboBox, L"None");
-			// adding hokeys names to list
-			HKComboBox_AddKey(hHKComboBox, VK_BACK);
-			HKComboBox_AddKey(hHKComboBox, VK_TAB);
-			HKComboBox_AddKey(hHKComboBox, VK_RETURN);
-			HKComboBox_AddKey(hHKComboBox, VK_CAPITAL);
-			HKComboBox_AddKey(hHKComboBox, VK_ESCAPE);
-			HKComboBox_AddKey(hHKComboBox, VK_SPACE);
-			for (id=VK_PRIOR; id<=VK_DOWN; id++)
-				HKComboBox_AddKey(hHKComboBox, id);
-			for (id=VK_INSERT; id<=VK_DELETE; id++)
-				HKComboBox_AddKey(hHKComboBox, id);
-			for (id=0x30; id<=0x39; id++)				//numbers
-				HKComboBox_AddKey(hHKComboBox, id);
-			for (id=0x41; id<=0x5A; id++)				//words
-				HKComboBox_AddKey(hHKComboBox, id);
-			for (id=VK_NUMPAD0; id<=VK_ADD; id++)		//numpad
-				HKComboBox_AddKey(hHKComboBox, id);
-			for (id=VK_SUBTRACT; id<=VK_F12; id++)		//numpad and F1-F12
-				HKComboBox_AddKey(hHKComboBox, id);
-			HKComboBox_AddKey(hHKComboBox, VK_SNAPSHOT);
-			HKComboBox_AddKey(hHKComboBox, VK_SCROLL);
-			ComboBox_SetCurSel(hHKComboBox, 0);
-							
+			settingsItems.push_back(L"General");
+			settingsItems.push_back(L"View");
+			settingsItems.push_back(L"Mouse");
+			settingsItems.push_back(L"Hotkeys");
+			settingsItems.push_back(L"About");
+			hSettingsListBox = GetDlgItem(hwndDlg, IDC_LIST);
+			for(unsigned short i=0; i<settingsItems.size(); i++)
+			{
+				ListBox_AddString(hSettingsListBox, settingsItems[i].c_str());
+			}
+			ListBox_SetCurSel(hSettingsListBox, 0);
+			hGeneralPage = CreateDialog(0, MAKEINTRESOURCE(IDD_GENERAL), hwndDlg, (DLGPROC)GeneralPage_Proc);
+			hHotkeysPage = CreateDialog(0, MAKEINTRESOURCE(IDD_HOTKEYS), hwndDlg, (DLGPROC)HotkeysPage_Proc);
+
+			
+			//SubClassWinHotkeyCtrl(GetDlgItem(hwndDlg, IDC_EDIT));
+			//OldEditProc = (WNDPROC) SetWindowLongPtr(GetDlgItem(hwndDlg, IDC_EDIT), GWLP_WNDPROC, (LONG_PTR) HKEditProc);
+				
 			return TRUE;
 		
 		case WM_COMMAND:	// notification msgs from child controls
-			switch (LOWORD(wParam)) 
-			{ 
+			switch (LOWORD(wParam))
+			{
+				case IDC_LIST:
+					switch (HIWORD(wParam))
+					{
+						case LBN_SELCHANGE:
+							MessageBox(hwndDlg, L"Current page = visible", L"!!!!", MB_OK | MB_ICONERROR); // fixme
+							return TRUE;	
+					}
+					break;
+
 				case IDOK: 
-					SaveConfig();
+					saveConfig();
 					DestroyWindow(hwndDlg); 
 					hSettingsWnd = NULL; 
 					return TRUE; 
+				
 				case IDCANCEL: 
 					DestroyWindow(hwndDlg); 
 					hSettingsWnd = NULL; 

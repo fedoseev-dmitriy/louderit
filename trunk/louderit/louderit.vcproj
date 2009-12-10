@@ -341,6 +341,14 @@
 				RelativePath=".\src\tray.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\src\vkCodes.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\WinHotkeyCtrl.cpp"
+				>
+			</File>
 			<Filter
 				Name="volume"
 				>
@@ -385,6 +393,14 @@
 			</File>
 			<File
 				RelativePath=".\inc\tray.h"
+				>
+			</File>
+			<File
+				RelativePath=".\inc\vkCodes.h"
+				>
+			</File>
+			<File
+				RelativePath=".\inc\WinHotkeyCtrl.h"
 				>
 			</File>
 			<Filter

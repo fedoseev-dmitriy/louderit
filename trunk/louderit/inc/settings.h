@@ -1,7 +1,5 @@
 #pragma once
 
-#define HKComboBox_AddKey(hComboBox, vk) ((HWND)(UINT)(BOOL)SNDMSG(hComboBox, CB_ADDSTRING, 0, (LPARAM)GetKeyName(vk).c_str()));
-
 extern wchar_t config_file[MAX_PATH];	// config fullpath
 
 //------------------------------------------------------------------------------
@@ -17,6 +15,21 @@ extern bool scrollWithCtrl;
 extern bool scrollWithAlt;
 extern bool scrollWithShift;
 
-extern bool GetAppPath(wchar_t *path);
-extern void GetConfigFile(void);
+extern bool getAppPath(wchar_t *path);
+extern void getConfigFile(void);
 extern bool ShowSettingsDlg(HWND hParentWnd);
+
+//class SettingsPage
+//{
+//public:
+//					SettingsPage(HWND hWnd);
+//	virtual			~SettingsPage();
+//
+//	bool			SetTitle(wstring);
+//	wstring			GetTitle();
+//
+//	INT_PTR CALLBACK PageDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+//
+//protected:
+//	wstring			m_Title;
+//};
