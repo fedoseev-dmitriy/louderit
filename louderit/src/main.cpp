@@ -106,7 +106,7 @@ BOOL SetHotKey(const wstring& SKey, const wstring& SMod, int NumKey)
 //------------------------------------------------------------------------------
 void LoadConfig() //FIXME! mus be move to settings.c
 {
-	GetConfigFile();
+	getConfigFile();
 
 	// [General]
 	//...устройства
@@ -162,7 +162,7 @@ void LoadIcons()
 {
 	wchar_t			path[MAX_PATH] = {0};
     
-	GetAppPath(path);
+	getAppPath(path);
 	_tcscat_s(path, L"\\skins\\");
 	_tcscat_s(path, skin_name);
 
