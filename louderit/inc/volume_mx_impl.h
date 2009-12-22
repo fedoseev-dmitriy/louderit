@@ -29,8 +29,8 @@ public:
 private:
 	enum Channel
 	{
-		LEFT = 1,
-		RIGHT = 2
+		kLeft = 1,
+		kRight = 2
 	};
 
 	mutable MMRESULT				mm_result_;

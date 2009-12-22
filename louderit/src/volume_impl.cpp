@@ -98,11 +98,11 @@ bool VolumeImpl::GetMute() const
 void VolumeImpl::SetVolumeChannel(int l_channel_volume, int r_channel_volume)
 {
 	float volume = (float)l_channel_volume / MAX_VOL;
-	hr_ = end_point_volume_->SetChannelVolumeLevelScalar(LEFT, volume, &guid_context_);
+	hr_ = end_point_volume_->SetChannelVolumeLevelScalar(kLeft, volume, &guid_context_);
 	EXIT_ON_ERROR(hr_);
 
 	volume = (float)r_channel_volume / MAX_VOL;
-	hr_ = end_point_volume_->SetChannelVolumeLevelScalar(RIGHT, volume, &guid_context_);
+	hr_ = end_point_volume_->SetChannelVolumeLevelScalar(kRight, volume, &guid_context_);
 	EXIT_ON_ERROR(hr_);
 }
 
