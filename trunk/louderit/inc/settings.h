@@ -9,11 +9,11 @@ extern wchar_t device_name[MAX_PATH];
 extern int steps;
 extern wchar_t skin_name[MAX_PATH];
 extern int balance;
-extern bool balloonHint;
-extern bool scrollWithTray;
-extern bool scrollWithCtrl;
-extern bool scrollWithAlt;
-extern bool scrollWithShift;
+extern bool balloon_hint;
+extern bool scroll_with_tray;
+extern bool scroll_with_ctrl;
+extern bool scroll_with_alt;
+extern bool scroll_with_shift;
 
 extern bool getAppPath(wchar_t *path);
 extern void getConfigFile(void);

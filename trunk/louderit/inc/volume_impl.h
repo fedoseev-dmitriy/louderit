@@ -105,7 +105,7 @@ private:
 
 	enum Channel
 	{
-		LEFT = 0,
-		RIGHT
+		kLeft = 0,
+		kRight
 	};
 };

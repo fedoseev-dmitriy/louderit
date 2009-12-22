@@ -21,11 +21,11 @@ wchar_t device_name[MAX_PATH] = {0};
 int steps = 0;
 wchar_t skin_name[MAX_PATH] = {0};
 int balance = 50;
-bool balloonHint = false;
-bool scrollWithTray = false;
-bool scrollWithCtrl = false;
-bool scrollWithAlt = false;
-bool scrollWithShift = false;
+bool balloon_hint = false;
+bool scroll_with_tray = false;
+bool scroll_with_ctrl = false;
+bool scroll_with_alt = false;
+bool scroll_with_shift = false;
 
 static WNDPROC OldEditProc;
 static DWORD tempModifiers;
