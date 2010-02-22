@@ -2,6 +2,8 @@
 // Microsoft Visual C++ generated include file.
 // Used by louderit.rc
 //
+#define IDCANCEL2                       3
+#define IDAPPLY                         3
 #define IDI_ICON1                       101
 #define IDD_HOTKEYS                     101
 #define IDI_ICON2                       103
@@ -10,6 +12,9 @@
 #define IDD_PROPDLG                     105
 #define IDD_SETTINGS                    105
 #define IDD_GENERAL                     106
+#define IDD_ABOUT                       107
+#define IDD_VIEW                        108
+#define IDD_MOUSE                       109
 #define IDC_TAB                         1001
 #define IDC_CTRLCHECK                   1007
 #define IDC_ALTCHECK                    1008
@@ -30,7 +35,6 @@
 #define ID_TRAYMENU_SETTINGS            40003
 #define ID_TRAYMENU_EXIT                40004
 #define IDC_HOTKEYS                     -1
-#define IDC_STATIC                      -1
 
 // Next default values for new objects
 // 

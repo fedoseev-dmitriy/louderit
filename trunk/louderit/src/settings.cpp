@@ -1,7 +1,7 @@
 #include "precompiled.h"
 #include "settings.h"
 #include "resource.h"
-#include "WinHotkeyCtrl.h"
+//#include "WinHotkeyCtrl.h"
 
 vector<wstring> settingsItems;
 
@@ -9,7 +9,12 @@ HWND hSettingsWnd = NULL;
 HWND hSettingsListBox = NULL;
 
 HWND hGeneralPage = NULL;
+HWND hViewPage = NULL;
+HWND hMousePage = NULL;
 HWND hHotkeysPage = NULL;
+HWND hAboutPage = NULL;
+
+HWND hCurrentPage = NULL;
 
 wchar_t config_name[] = L"lconfig.ini";	// config filename
 wchar_t config_file[MAX_PATH] = {0};	// config fullpath
@@ -26,12 +31,6 @@ bool scroll_with_tray = false;
 bool scroll_with_ctrl = false;
 bool scroll_with_alt = false;
 bool scroll_with_shift = false;
-
-static WNDPROC OldEditProc;
-static DWORD tempModifiers;
-static DWORD modifiers;
-static DWORD virtualKey;
-static TCHAR *keySeparator = _T(" + ");
 
 //------------------------------------------------------------------------------
 // Getting the application directory
@@ -61,47 +60,6 @@ void getConfigFile(void)
 	_tcscat_s(config_file, config_name);
 }
 
-////-----------------------------------------------------------------------------
-//static const TCHAR* getKeyName(DWORD key) {
-//	static TCHAR keyName[64];
-//	int nameLen = 0;
-//	ZeroMemory(keyName, sizeof(keyName));
-//	if (key & MOD_CONTROL) {
-//		GetKeyNameText(MAKELPARAM(0, MapVirtualKey(VK_CONTROL, 0)), keyName, 64);
-//		_tcscat(keyName, keySeparator);
-//		nameLen = _tcslen(keyName);
-//	}
-//	if (key & MOD_SHIFT) {
-//		GetKeyNameText(MAKELPARAM(0, MapVirtualKey(VK_SHIFT, 0)), &keyName[nameLen], 64 - nameLen);
-//		_tcscat(keyName, keySeparator);
-//		nameLen = _tcslen(keyName);
-//	}
-//	if (key & MOD_ALT) {
-//		GetKeyNameText(MAKELPARAM(0, MapVirtualKey(VK_MENU, 0)), &keyName[nameLen], 64 - nameLen);
-//		_tcscat(keyName, keySeparator);
-//		nameLen = _tcslen(keyName);
-//	}
-//	if ((key & 0xFFFF) != 0) {
-//		DWORD scanCode = MapVirtualKey(key & 0xFFFF, 0);
-//		switch(key & 0xFFFF) {
-//		case VK_INSERT:
-//		case VK_DELETE:
-//		case VK_HOME:
-//		case VK_END:
-//		case VK_NEXT:
-//		case VK_PRIOR:
-//		case VK_LEFT:
-//		case VK_RIGHT:
-//		case VK_UP:
-//		case VK_DOWN:
-//			scanCode |= 0x100; // Add extended bit
-//		}
-//		GetKeyNameText(MAKELPARAM(0, scanCode), &keyName[nameLen], 64 - nameLen);
-//		nameLen = _tcslen(keyName);
-//	}
-//	return keyName;
-//}
-
 //-----------------------------------------------------------------------------
 void saveConfig()
 {
@@ -113,80 +71,37 @@ void saveConfig()
 
 }
 
-//static void refreshPreview(HWND hwnd) 
-//{
-//	SetWindowText(hwnd, getKeyName(virtualKey | modifiers));
-//}
-//
-//static LRESULT CALLBACK HKEditProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-//{
-//	switch (msg) {
-//		case WM_CREATE:
-//			virtualKey = 0;
-//			break;
-//		case WM_SYSKEYDOWN:
-//		case WM_KEYDOWN:
-//			if (virtualKey != 0) {
-//				virtualKey = 0;
-//			}
-//		    switch (wParam)
-//			{
-//				case VK_CONTROL:
-//				case VK_LCONTROL:
-//				case VK_RCONTROL: tempModifiers = MOD_CONTROL; break;
-//				case VK_MENU:
-//				case VK_LMENU: 
-//				case VK_RMENU: tempModifiers = MOD_ALT; break;
-//				case VK_SHIFT:
-//				case VK_LSHIFT:
-//				case VK_RSHIFT: tempModifiers = MOD_SHIFT; break;
-//				
-//				default:
-//					virtualKey = wParam;
-//					break;
-//			}
-//			modifiers = tempModifiers;
-//			refreshPreview(hwnd);
-//			return 0;
-//		case WM_KEYUP:
-//		case WM_SYSKEYUP:
-//			switch (wParam)
-//			{
-//				case VK_SHIFT:
-//					tempModifiers &= ~MOD_SHIFT;
-//					break;
-//				case VK_CONTROL:
-//					tempModifiers &= ~MOD_CONTROL;
-//					break;
-//				case VK_MENU:
-//					tempModifiers &= ~MOD_ALT;
-//					break;
-//				default:
-//					break;
-//			}
-//			if (virtualKey == 0) {
-//				modifiers = tempModifiers;
-//				refreshPreview(hwnd);
-//			}
-//		case WM_CHAR:
-//		case WM_PASTE:
-//			return 0;
-//		case WM_SETFOCUS:
-//			modifiers = 0;
-//			tempModifiers = 0;
-//			virtualKey = 0;
-//			refreshPreview(hwnd);
-//			break;
-//		case WM_GETDLGCODE:
-//			return DLGC_WANTARROWS|DLGC_WANTALLKEYS| DLGC_WANTTAB;
-//	}
-//	return CallWindowProc(OldEditProc, hwnd, msg, wParam, lParam);
-//}
-//
-//-----------------------------------------------------------------------------
 INT_PTR CALLBACK GeneralPage_Proc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	
+	switch (uMsg)
+	{
+		case WM_INITDIALOG:	// before a dialog is displayed
+				
+			return TRUE;
+		
+		case WM_COMMAND:	// notification msgs from child controls
+			return TRUE;
+	}
+	return FALSE;
+}
+
+INT_PTR CALLBACK ViewPage_Proc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMsg)
+	{
+		case WM_INITDIALOG:	// before a dialog is displayed
+				
+			return TRUE;
+		
+		case WM_COMMAND:	// notification msgs from child controls
+			return TRUE;
+	}
+	return FALSE;
+}
+
+INT_PTR CALLBACK MousePage_Proc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
 	switch (uMsg)
 	{
 		case WM_INITDIALOG:	// before a dialog is displayed
@@ -212,6 +127,27 @@ INT_PTR CALLBACK HotkeysPage_Proc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
 	}
 	return FALSE;
 }
+INT_PTR CALLBACK AboutPage_Proc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMsg)
+	{
+		case WM_INITDIALOG:	// before a dialog is displayed
+				
+			return TRUE;
+		
+		case WM_COMMAND:	// notification msgs from child controls
+			return TRUE;
+	}
+	return FALSE;
+}
+
+
+void ChangePage(HWND hwndPage)
+{
+	ShowWindow(hCurrentPage, SW_HIDE);
+	ShowWindow(hwndPage, SW_SHOW);
+	hCurrentPage = hwndPage;
+}
 
 INT_PTR CALLBACK SettingsDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -221,23 +157,28 @@ INT_PTR CALLBACK SettingsDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	{
 		case WM_INITDIALOG:	// before a dialog is displayed
 			
-			settingsItems.push_back(L"General");
-			settingsItems.push_back(L"View");
-			settingsItems.push_back(L"Mouse");
-			settingsItems.push_back(L"Hotkeys");
-			settingsItems.push_back(L"About");
+			// filling items in listbox
+			if (settingsItems.size() == 0) {
+				settingsItems.push_back(L"General");
+				settingsItems.push_back(L"View");
+				settingsItems.push_back(L"Mouse");
+				settingsItems.push_back(L"Hotkeys");
+				settingsItems.push_back(L"About");
+			}
+
 			hSettingsListBox = GetDlgItem(hwndDlg, IDC_LIST);
 			for(unsigned short i=0; i<settingsItems.size(); i++)
 			{
 				ListBox_AddString(hSettingsListBox, settingsItems[i].c_str());
 			}
 			ListBox_SetCurSel(hSettingsListBox, 0);
-			hGeneralPage = CreateDialog(0, MAKEINTRESOURCE(IDD_GENERAL), hwndDlg, (DLGPROC)GeneralPage_Proc);
-			hHotkeysPage = CreateDialog(0, MAKEINTRESOURCE(IDD_HOTKEYS), hwndDlg, (DLGPROC)HotkeysPage_Proc);
-
 			
-			//SubClassWinHotkeyCtrl(GetDlgItem(hwndDlg, IDC_EDIT));
-			//OldEditProc = (WNDPROC) SetWindowLongPtr(GetDlgItem(hwndDlg, IDC_EDIT), GWLP_WNDPROC, (LONG_PTR) HKEditProc);
+			hGeneralPage = CreateDialog(0, MAKEINTRESOURCE(IDD_GENERAL), hwndDlg, (DLGPROC)GeneralPage_Proc);
+			hViewPage = CreateDialog(0, MAKEINTRESOURCE(IDD_VIEW), hwndDlg, (DLGPROC)ViewPage_Proc);
+			hMousePage = CreateDialog(0, MAKEINTRESOURCE(IDD_MOUSE), hwndDlg, (DLGPROC)MousePage_Proc);
+			hHotkeysPage = CreateDialog(0, MAKEINTRESOURCE(IDD_HOTKEYS), hwndDlg, (DLGPROC)HotkeysPage_Proc);
+			hAboutPage = CreateDialog(0, MAKEINTRESOURCE(IDD_ABOUT), hwndDlg, (DLGPROC)AboutPage_Proc);
+			hCurrentPage = hGeneralPage;
 				
 			return TRUE;
 		
@@ -248,7 +189,26 @@ INT_PTR CALLBACK SettingsDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 					switch (HIWORD(wParam))
 					{
 						case LBN_SELCHANGE:
-							MessageBox(hwndDlg, L"Current page = visible", L"!!!!", MB_OK | MB_ICONERROR); // fixme
+							switch ListBox_GetCurSel(hSettingsListBox)
+							{
+								case 0:
+									ChangePage(hGeneralPage);
+									break;
+								case 1:
+									ChangePage(hViewPage);
+									break;
+								case 2:
+									ChangePage(hMousePage);
+									break;
+								case 3:
+									ChangePage(hHotkeysPage);
+									break;
+								case 4:
+									ChangePage(hAboutPage);
+									break;
+								//default:
+								//	ChangePage(hGeneralPage);
+							}
 							return TRUE;	
 					}
 					break;
