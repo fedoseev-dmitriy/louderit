@@ -29,6 +29,7 @@
 #define IDC_EDIT3                       1014
 #define IDC_CHECK1                      1015
 #define IDC_COMBO1                      1019
+#define IDC_DEVLIST                     1019
 #define IDC_WINCHECK                    1035
 #define ID_TRAYMENU_OPENMIXER           40001
 #define ID_TRAYMENU_AUDIOPROPERTIES     40002

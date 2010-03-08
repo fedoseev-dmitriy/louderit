@@ -15,6 +15,8 @@ extern bool scroll_with_ctrl;
 extern bool scroll_with_alt;
 extern bool scroll_with_shift;
 
+extern bool isWindowsXP;
+
 extern bool getAppPath(wchar_t *path);
 extern void getConfigFile(void);
 extern bool ShowSettingsDlg(HWND hParentWnd);

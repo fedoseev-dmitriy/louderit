@@ -25,7 +25,6 @@ UINT					WM_LOADCONFIG		= 0;
 //------------------------------------------------------------------------------
 HINSTANCE				instance = NULL;
 HWND					window = NULL;
-bool					isWindowsXP = false;
 
 vector<HICON>			icons;
 int						icon_index = 0;

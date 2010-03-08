@@ -1,6 +1,8 @@
 #include "precompiled.h"
 #include "settings.h"
 #include "resource.h"
+#include "volume_impl.h"
+#include "volume_mx_impl.h"
 //#include "WinHotkeyCtrl.h"
 
 vector<wstring> settingsItems;
@@ -9,6 +11,8 @@ HWND hSettingsWnd = NULL;
 HWND hSettingsListBox = NULL;
 
 HWND hGeneralPage = NULL;
+HWND hDevListBox = NULL;
+
 HWND hViewPage = NULL;
 HWND hMousePage = NULL;
 HWND hHotkeysPage = NULL;
@@ -22,15 +26,17 @@ wchar_t config_file[MAX_PATH] = {0};	// config fullpath
 //------------------------------------------------------------------------------
 // Settings
 //------------------------------------------------------------------------------
-wchar_t device_name[MAX_PATH] = {0};
-int steps = 0;
-wchar_t skin_name[MAX_PATH] = {0};
-int balance = 50;
-bool balloon_hint = false;
-bool scroll_with_tray = false;
-bool scroll_with_ctrl = false;
-bool scroll_with_alt = false;
-bool scroll_with_shift = false;
+wchar_t	device_name[MAX_PATH] = {0};
+int		steps = 0;
+wchar_t	skin_name[MAX_PATH] = {0};
+int		balance = 50;
+bool	balloon_hint = false;
+bool	scroll_with_tray = false;
+bool	scroll_with_ctrl = false;
+bool	scroll_with_alt = false;
+bool	scroll_with_shift = false;
+
+bool	isWindowsXP = false;
 
 //------------------------------------------------------------------------------
 // Getting the application directory
@@ -63,21 +69,43 @@ void getConfigFile(void)
 //-----------------------------------------------------------------------------
 void saveConfig()
 {
+	
 	// FIXME!
-	WritePrivateProfileString(L"HotKeys", L"VolumeUp", L"0", config_file);
-	WritePrivateProfileString(L"HotKeys", L"VolumeDown", L"0", config_file);
-	WritePrivateProfileString(L"HotKeys", L"VolumeMute", L"0", config_file);
-	WritePrivateProfileString(L"HotKeys", L"ShowMixer", L"0", config_file);
+	//WritePrivateProfileString(L"HotKeys", L"VolumeUp", L"0", config_file);
+	//WritePrivateProfileString(L"HotKeys", L"VolumeDown", L"0", config_file);
+	//WritePrivateProfileString(L"HotKeys", L"VolumeMute", L"0", config_file);
+	//WritePrivateProfileString(L"HotKeys", L"ShowMixer", L"0", config_file);
 
 }
 
 INT_PTR CALLBACK GeneralPage_Proc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	
+	IVolume	*tmp_volume = NULL; //FIXME (this block need for union whith main volume-object)
+	if (isWindowsXP)
+	{
+		tmp_volume = new VolumeMxImpl;
+	}
+	else // Vista or Win7
+	{
+		tmp_volume = new VolumeImpl;
+	}
+	
+	int nDev;
+
 	switch (uMsg)
 	{
 		case WM_INITDIALOG:	// before a dialog is displayed
-				
+			
+			
+			hDevListBox = GetDlgItem(hwndDlg, IDC_DEVLIST);
+
+			nDev = tmp_volume->GetNumDevice();
+			for (int i = 0; nDev - 1 >= i; ++i)
+			{
+				ComboBox_AddString(hDevListBox, tmp_volume->GetDeviceName(i).c_str());
+			}
+			ComboBox_SetCurSel(hDevListBox, 0);
 			return TRUE;
 		
 		case WM_COMMAND:	// notification msgs from child controls
@@ -102,10 +130,11 @@ INT_PTR CALLBACK ViewPage_Proc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 
 INT_PTR CALLBACK MousePage_Proc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+		
 	switch (uMsg)
 	{
 		case WM_INITDIALOG:	// before a dialog is displayed
-				
+			
 			return TRUE;
 		
 		case WM_COMMAND:	// notification msgs from child controls
@@ -159,7 +188,7 @@ INT_PTR CALLBACK SettingsDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			
 			// filling items in listbox
 			if (settingsItems.size() == 0) {
-				settingsItems.push_back(L"General");
+				settingsItems.push_back(L"General"); // FIXME (need move this strings to res)
 				settingsItems.push_back(L"View");
 				settingsItems.push_back(L"Mouse");
 				settingsItems.push_back(L"Hotkeys");
