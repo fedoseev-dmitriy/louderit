@@ -30,6 +30,7 @@
 #define IDC_CHECK1                      1015
 #define IDC_COMBO1                      1019
 #define IDC_DEVLIST                     1019
+#define IDC_COMBO2                      1022
 #define IDC_WINCHECK                    1035
 #define ID_TRAYMENU_OPENMIXER           40001
 #define ID_TRAYMENU_AUDIOPROPERTIES     40002
@@ -43,7 +44,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        108
 #define _APS_NEXT_COMMAND_VALUE         40005
-#define _APS_NEXT_CONTROL_VALUE         1022
+#define _APS_NEXT_CONTROL_VALUE         1023
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
