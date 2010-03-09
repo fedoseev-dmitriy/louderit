@@ -1,4 +1,6 @@
 #pragma once
+#include "volume_impl.h"
+#include "volume_mx_impl.h" //FIXME need this remove
 
 extern wchar_t config_file[MAX_PATH];	// config fullpath
 
@@ -15,6 +17,8 @@ extern bool scroll_with_ctrl;
 extern bool scroll_with_alt;
 extern bool scroll_with_shift;
 
+extern IVolume *volume;
+extern int nDev;
 extern bool isWindowsXP;
 
 extern bool getAppPath(wchar_t *path);

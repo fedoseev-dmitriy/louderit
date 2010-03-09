@@ -1,8 +1,7 @@
 #include "precompiled.h"
 #include "settings.h"
 #include "resource.h"
-#include "volume_impl.h"
-#include "volume_mx_impl.h"
+
 //#include "WinHotkeyCtrl.h"
 
 vector<wstring> settingsItems;
@@ -36,6 +35,8 @@ bool	scroll_with_ctrl = false;
 bool	scroll_with_alt = false;
 bool	scroll_with_shift = false;
 
+IVolume	*volume = NULL;
+int		nDev;
 bool	isWindowsXP = false;
 
 //------------------------------------------------------------------------------
@@ -69,8 +70,11 @@ void getConfigFile(void)
 //-----------------------------------------------------------------------------
 void saveConfig()
 {
-	
-	// FIXME!
+	int CurDev = ComboBox_GetCurSel(GetDlgItem(hGeneralPage, IDC_DEVLIST));
+	if (CurDev == 0)
+		WritePrivateProfileString(L"General", L"Device", L"", config_file);
+	else // FIXME: ÒÓÒ ÊÐÎÅÒÑß ÎØÈÁÊÀ!!!
+		WritePrivateProfileString(L"General", L"Device", volume->GetDeviceName(CurDev).c_str(), config_file);
 	//WritePrivateProfileString(L"HotKeys", L"VolumeUp", L"0", config_file);
 	//WritePrivateProfileString(L"HotKeys", L"VolumeDown", L"0", config_file);
 	//WritePrivateProfileString(L"HotKeys", L"VolumeMute", L"0", config_file);
@@ -81,29 +85,15 @@ void saveConfig()
 INT_PTR CALLBACK GeneralPage_Proc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	
-	IVolume	*tmp_volume = NULL; //FIXME (this block need for union whith main volume-object)
-	if (isWindowsXP)
-	{
-		tmp_volume = new VolumeMxImpl;
-	}
-	else // Vista or Win7
-	{
-		tmp_volume = new VolumeImpl;
-	}
-	
-	int nDev;
-
 	switch (uMsg)
 	{
 		case WM_INITDIALOG:	// before a dialog is displayed
 			
-			
 			hDevListBox = GetDlgItem(hwndDlg, IDC_DEVLIST);
-
-			nDev = tmp_volume->GetNumDevice();
+			ComboBox_AddString(hDevListBox, L"Default");
 			for (int i = 0; nDev - 1 >= i; ++i)
 			{
-				ComboBox_AddString(hDevListBox, tmp_volume->GetDeviceName(i).c_str());
+				ComboBox_AddString(hDevListBox, volume->GetDeviceName(i).c_str());
 			}
 			ComboBox_SetCurSel(hDevListBox, 0);
 			return TRUE;

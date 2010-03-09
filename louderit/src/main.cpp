@@ -37,8 +37,6 @@ bool					is_double_click = false;
 int						hot_key = 0;
 int						key_mod = 0;
 
-IVolume					*volume = NULL;
-
 TrayIcon				*trayicon = NULL;
 
 HHOOK					hook;
@@ -113,9 +111,9 @@ void LoadConfig() //FIXME! mus be move to settings.c
 		
 	
 	// [General]
-	int n = volume->GetNumDevice();
+	nDev = volume->GetNumDevice();
 
-	for (int i = 0; n - 1 >= i; ++i)
+	for (int i = 0; nDev - 1 >= i; ++i)
 	{
 		// FIXME: ÒÓÒ ÊÐÎÅÒÑß ÎØÈÁÊÀ!!!!!!!
 		if (lstrcmp(device_name, volume->GetDeviceName(i).c_str()) == 0)
