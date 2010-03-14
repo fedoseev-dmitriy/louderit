@@ -70,11 +70,18 @@ void getConfigFile(void)
 //-----------------------------------------------------------------------------
 void saveConfig()
 {
-	int CurDev = ComboBox_GetCurSel(GetDlgItem(hGeneralPage, IDC_DEVLIST));
-	if (CurDev == 0)
-		WritePrivateProfileString(L"General", L"Device", L"", config_file);
-	else // FIXME: ÒÓÒ ÊÐÎÅÒÑß ÎØÈÁÊÀ!!!
-		WritePrivateProfileString(L"General", L"Device", volume->GetDeviceName(CurDev).c_str(), config_file);
+	LRESULT selected_device = ComboBox_GetCurSel(GetDlgItem(hGeneralPage, IDC_DEVLIST));
+	wstring device_name;
+	if (selected_device != 0)
+	{
+		device_name = volume->GetDeviceName(selected_device-1);
+	}
+	else
+	{
+		device_name = L"";
+	}
+	WritePrivateProfileString(L"General", L"Device",  device_name.c_str(), config_file);
+	
 	//WritePrivateProfileString(L"HotKeys", L"VolumeUp", L"0", config_file);
 	//WritePrivateProfileString(L"HotKeys", L"VolumeDown", L"0", config_file);
 	//WritePrivateProfileString(L"HotKeys", L"VolumeMute", L"0", config_file);
