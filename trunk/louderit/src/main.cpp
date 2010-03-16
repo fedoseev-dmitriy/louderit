@@ -175,20 +175,27 @@ void LoadIcons()
 	}
 	else
 	{
-		// FIXME!
-		num_icons = 2;
-		HICON hIcon[2];
 		if (isWindowsXP)
 		{
+			num_icons = 2;
+			HICON hIcon[2];
 			ExtractIconEx(L"sndvol32.exe", 3, NULL, hIcon, 2);
 			icons.push_back(hIcon[1]);
 			icons.push_back(hIcon[0]);
 		}
 		else
 		{
-			ExtractIconEx(L"SndVol.exe", 1, NULL, hIcon, 2);
-			icons.push_back(hIcon[0]);
+			num_icons = 8;
+			HICON hIcon[5];
+			ExtractIconEx(L"SndVolSSO.dll", 1, NULL, hIcon, 5);
 			icons.push_back(hIcon[1]);
+			icons.push_back(hIcon[2]);
+			icons.push_back(hIcon[3]);
+			icons.push_back(hIcon[4]);
+			icons.push_back(hIcon[0]);
+			icons.push_back(hIcon[0]);
+			icons.push_back(hIcon[0]);
+			icons.push_back(hIcon[0]);
 		}
 	}
 }
