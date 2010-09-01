@@ -71,15 +71,7 @@ void getConfigFile(void)
 void saveConfig()
 {
 	LRESULT selected_device = ComboBox_GetCurSel(GetDlgItem(hGeneralPage, IDC_DEVLIST));
-	wstring device_name;
-	if (selected_device != 0)
-	{
-		device_name = volume->GetDeviceName(selected_device-1);
-	}
-	else
-	{
-		device_name = L"";
-	}
+	wstring device_name = (selected_device) ? volume->GetDeviceName(selected_device-1) : L"";
 	WritePrivateProfileString(L"General", L"Device",  device_name.c_str(), config_file);
 	
 	//WritePrivateProfileString(L"HotKeys", L"VolumeUp", L"0", config_file);
