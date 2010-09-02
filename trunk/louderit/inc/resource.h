@@ -28,6 +28,7 @@
 #define IDC_EDIT2                       1013
 #define IDC_EDIT3                       1014
 #define IDC_CHECK1                      1015
+#define IDC_AUTOSTART                   1015
 #define IDC_COMBO1                      1019
 #define IDC_DEVLIST                     1019
 #define IDC_COMBO2                      1022
