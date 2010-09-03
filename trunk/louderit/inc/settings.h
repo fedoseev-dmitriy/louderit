@@ -8,6 +8,7 @@ extern wchar_t config_file[MAX_PATH];	// config fullpath
 // Settings
 //------------------------------------------------------------------------------
 extern wchar_t device_name[MAX_PATH];
+extern UINT device_number;
 extern int steps;
 extern wchar_t skin_name[MAX_PATH];
 extern int balance;
@@ -16,6 +17,7 @@ extern bool scroll_with_tray;
 extern bool scroll_with_ctrl;
 extern bool scroll_with_alt;
 extern bool scroll_with_shift;
+extern int tray_commands[];
 
 extern IVolume *volume;
 extern int nDev;
@@ -24,6 +26,7 @@ extern bool isWindowsXP;
 extern bool getAppPath(wchar_t *path);
 extern void getConfigFile(void);
 extern bool ShowSettingsDlg(HWND hParentWnd);
+extern void loadConfig();
 
 //class SettingsPage
 //{

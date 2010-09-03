@@ -41,9 +41,7 @@ TrayIcon				*trayicon = NULL;
 
 HHOOK					hook;
 
-int							tray_commands[] = {0,0,0};
 
-UINT						device_number = 0;
 
 //-----------------------------------------------------------------------------
 bool Launch(HWND hwnd, const wchar_t* command_line, const wchar_t* parameters = NULL,
@@ -98,59 +96,6 @@ BOOL SetHotKey(const wstring& SKey, const wstring& SMod, int NumKey)
 	return false;
 }
 
-//------------------------------------------------------------------------------
-// Загрузка настроек
-//------------------------------------------------------------------------------
-void LoadConfig() //FIXME! mus be move to settings.c
-{
-	getConfigFile();
-
-	// [General]
-	//...устройства
-	GetPrivateProfileString(L"General", L"Device", 0, device_name, 256, config_file);
-		
-	
-	// [General]
-	nDev = volume->GetNumDevice();
-
-	for (int i = 0; nDev - 1 >= i; ++i)
-	{
-		// FIXME: ТУТ КРОЕТСЯ ОШИБКА!!!!!!!
-		if (lstrcmp(device_name, volume->GetDeviceName(i).c_str()) == 0)
-		{
-			device_number = i;
-			break;
-		}
-	}
-	lstrcpyn(device_name, volume->GetDeviceName(device_number).c_str(),
-		sizeof(device_name)/sizeof(device_name[0]));
-
-	// INIT MIXER!
-	// сюда перенести volume->Init(...);
-
-	balance = GetPrivateProfileInt(L"General", L"Balance", 50, config_file);
-
-	//...скорости регулирования
-	steps = GetPrivateProfileInt(L"General", L"Steps", 5, config_file);
-
-	GetPrivateProfileString(L"View", L"Skin", L"Classic.lsk", &skin_name[0], 1024, config_file);
-	balloon_hint = GetPrivateProfileInt(L"View", L"BalloonHint", 0, config_file);
-
-	scroll_with_tray = GetPrivateProfileInt(L"Mouse", L"Tray", 1, config_file);
-	scroll_with_ctrl = GetPrivateProfileInt(L"Mouse", L"Ctrl", 0, config_file);
-	scroll_with_alt = GetPrivateProfileInt(L"Mouse", L"Alt", 0, config_file);
-	scroll_with_shift = GetPrivateProfileInt(L"Mouse", L"Shift", 0, config_file);
-
-	//...действий над треем
-	tray_commands[0] = GetPrivateProfileInt(L"Mouse", L"Click", 1, config_file);
-	tray_commands[1] = GetPrivateProfileInt(L"Mouse", L"DClick", 2, config_file);
-	tray_commands[2] = GetPrivateProfileInt(L"Mouse", L"MClick", 3, config_file);
-
-	UnregHotKeys();
-	SetHotKey(L"UpKey", L"UpMod", kUpKey);
-	SetHotKey(L"DownKey", L"DownMod", kDownKey);
-	SetHotKey(L"MuteKey", L"MuteMod", kMuteKey);
-}
 //------------------------------------------------------------------------------
 // Загрузка иконок
 //------------------------------------------------------------------------------
@@ -374,7 +319,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	if (message == WM_LOADCONFIG)
 	{
-		LoadConfig();
+		loadConfig();
 		LoadIcons();
 		trayicon->Update(icons[icon_index], L"LouderIt");
 	}
@@ -510,8 +455,6 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 	if (nCode < 0)  // do not process the message 
 		return CallNextHookEx(hook, nCode, wParam, lParam);
 
-
-
 	hr = CallNextHookEx(hook, nCode, wParam, lParam);
 
 	if ((nCode == HC_ACTION) && (wParam == WM_MOUSEWHEEL)) 
@@ -614,8 +557,9 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	}
 	
 	SetHook(true); 
-	LoadConfig();
-
+	loadConfig();
+//	LoadConfig();
+	
 	volume->Init(device_number, window);
 
 	LoadIcons();

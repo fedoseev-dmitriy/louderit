@@ -19,25 +19,27 @@ HWND hAboutPage = NULL;
 
 HWND hCurrentPage = NULL;
 
-wchar_t app_file[MAX_PATH] = {0};		// application fullpath
-wchar_t config_name[] = L"lconfig.ini";	// config filename
-wchar_t config_file[MAX_PATH] = {0};	// config fullpath
+WCHAR app_file[MAX_PATH] = {0};		// application fullpath
+WCHAR config_name[] = L"lconfig.ini";	// config filename
+WCHAR config_file[MAX_PATH] = {0};	// config fullpath
 
 HKEY hk;
 
 //------------------------------------------------------------------------------
 // Settings
 //------------------------------------------------------------------------------
-wchar_t	device_name[MAX_PATH] = {0};
+WCHAR	device_name[MAX_PATH] = {0};
+UINT	device_number = 0;
 bool	autostart = false;
 int		steps = 0;
-wchar_t	skin_name[MAX_PATH] = {0};
+WCHAR	skin_name[MAX_PATH] = {0};
 int		balance = 50;
 bool	balloon_hint = false;
 bool	scroll_with_tray = false;
 bool	scroll_with_ctrl = false;
 bool	scroll_with_alt = false;
 bool	scroll_with_shift = false;
+int		tray_commands[] = {0,0,0};
 
 IVolume	*volume = NULL;
 int		nDev;
@@ -46,10 +48,10 @@ bool	isWindowsXP = false;
 //------------------------------------------------------------------------------
 // Getting the application directory
 //------------------------------------------------------------------------------
-bool getAppPath(wchar_t *path)
+bool getAppPath(WCHAR *path)
 {
-	//wchar_t		path_buff[MAX_PATH] = {0};
-	wchar_t		*path_name = 0;
+	//WCHAR		path_buff[MAX_PATH] = {0};
+	WCHAR		*path_name = 0;
 		
 	if ((!GetModuleFileName(NULL, app_file, MAX_PATH)) ||
 		(!GetFullPathName(app_file, MAX_PATH, path, &path_name)))
@@ -103,31 +105,61 @@ void saveConfig()
 //-----------------------------------------------------------------------------
 void loadConfig()
 {
+	getConfigFile();
+	
+	// device
 	GetPrivateProfileString(L"General", L"Device", L"", device_name, MAX_PATH, config_file);
 	
-	DWORD dwBytes = MAX_PATH;
-	wchar_t path[MAX_PATH];
+	nDev = volume->GetNumDevice();
+	for (int i=0; nDev-1 >= i; ++i)
+		if (lstrcmp(device_name, volume->GetDeviceName(i).c_str()) == 0)
+			device_number = i;
+			
+	// autostart
+	WCHAR path[MAX_PATH];
+	DWORD buff_size = MAX_PATH;
 	RegCreateKey(HKEY_CURRENT_USER,L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", &hk);
-	if ((RegQueryValueEx(hk, L"LouderIt", NULL, NULL, (LPBYTE)path, &dwBytes) == ERROR_SUCCESS) &&
+	if ((RegQueryValueEx(hk, L"LouderIt", NULL, NULL, (LPBYTE)path, &buff_size) == ERROR_SUCCESS) &&
 		(lstrcmp(path, app_file) == 0))
 		autostart = true;
 	RegCloseKey(hk);
+
+	// steps of wheel
+	steps = GetPrivateProfileInt(L"General", L"Steps", 5, config_file);
+	//balance = GetPrivateProfileInt(L"General", L"Balance", 50, config_file);
+	// skin for tray
+	GetPrivateProfileString(L"View", L"Skin", L"Classic.lsk", &skin_name[0], 1024, config_file);
+	// ballon hint
+	balloon_hint = GetPrivateProfileInt(L"View", L"BalloonHint", 0, config_file);
+
+	// mouse wheel 
+	scroll_with_tray = GetPrivateProfileInt(L"Mouse", L"Tray", 1, config_file);
+	scroll_with_ctrl = GetPrivateProfileInt(L"Mouse", L"Ctrl", 0, config_file);
+	scroll_with_alt = GetPrivateProfileInt(L"Mouse", L"Alt", 0, config_file);
+	scroll_with_shift = GetPrivateProfileInt(L"Mouse", L"Shift", 0, config_file);
+
+	// mouse clicks on tray icon
+	tray_commands[0] = GetPrivateProfileInt(L"Mouse", L"Click", 1, config_file);
+	tray_commands[1] = GetPrivateProfileInt(L"Mouse", L"DClick", 2, config_file);
+	tray_commands[2] = GetPrivateProfileInt(L"Mouse", L"MClick", 3, config_file);
+
+	//UnregHotKeys();
+	//SetHotKey(L"UpKey", L"UpMod", kUpKey);
+	//SetHotKey(L"DownKey", L"DownMod", kDownKey);
+	//SetHotKey(L"MuteKey", L"MuteMod", kMuteKey);*/
 }
 
 INT_PTR CALLBACK GeneralPage_Proc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	HWND hAutostarBox;
 	switch (uMsg)
 	{
 		case WM_INITDIALOG:	// before a dialog is displayed
-			
-			loadConfig();
 			
 			// device
 			hDevListBox = GetDlgItem(hwndDlg, IDC_DEVLIST);
 			ComboBox_AddString(hDevListBox, L"Default");
 			ComboBox_SetCurSel(hDevListBox, 0);
-			for (int i = 0; nDev - 1 >= i; ++i)
+			for (int i=0; nDev-1 >= i; ++i)
 			{
 				ComboBox_AddString(hDevListBox, volume->GetDeviceName(i).c_str());
 				if (lstrcmp(device_name, volume->GetDeviceName(i).c_str()) == 0)
