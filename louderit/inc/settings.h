@@ -24,7 +24,6 @@ extern int nDev;
 extern bool isWindowsXP;
 
 extern bool getAppPath(wchar_t *path);
-extern void getConfigFile(void);
 extern bool ShowSettingsDlg(HWND hParentWnd);
 extern void loadConfig();
 

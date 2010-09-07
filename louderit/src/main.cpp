@@ -102,7 +102,7 @@ BOOL SetHotKey(const wstring& SKey, const wstring& SMod, int NumKey)
 
 void LoadIcons() 
 {
-	wchar_t			path[MAX_PATH] = {0};
+	wchar_t path[MAX_PATH] = {0};
     
 	getAppPath(path);
 	_tcscat_s(path, L"\\skins\\");
@@ -558,12 +558,10 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	
 	SetHook(true); 
 	loadConfig();
-//	LoadConfig();
 	
 	volume->Init(device_number, window);
 
 	LoadIcons();
-	
 	trayicon = new TrayIcon(window);
 	trayicon->Add(icons[0], L"LouderIt");
 	UpdateTrayIcon();
